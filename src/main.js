@@ -11,6 +11,7 @@ import { today, taskKey } from './utils/date.js';
 import { initModal, showModal, hideModal } from './ui/render.js';
 import { renderParentStats, renderParentKids, renderHistory } from './ui/parent.js';
 import { initKidMode } from './ui/kid.js';
+import { renderCalendarView } from './ui/calendar.js';
 import {
   showAddKidModal, showEditKidModal,
   showAddTaskModal, showEditTaskModal,
@@ -24,7 +25,7 @@ import { startCheckout, getCheckoutResult } from './stripe/checkout.js';
 const state = load();
 
 // ── Screen helpers ───────────────────────────────────────────────
-const screens = ['modeSelect','pinScreen','parentMode','kidSelectScreen','kidMode'];
+const screens = ['modeSelect','pinScreen','parentMode','calendarMode','kidSelectScreen','kidMode'];
 
 function showScreen(id) {
   screens.forEach(s => {
@@ -191,6 +192,7 @@ document.getElementById('btnAddKid').onclick = () => {
 document.getElementById('btnSettings').onclick = () => {
   showSettingsModal(getPin(), newPin => { setPin(newPin); showModal('PIN Updated', 'Your parent PIN has been changed.', false, '🔒'); });
 };
+document.getElementById('btnCalendar').onclick = enterCalendarMode;
 document.getElementById('btnSwitchToKid').onclick = () => {
   if (state.kids.length === 1) {
     enterKidMode(state.kids[0].id);
@@ -204,6 +206,40 @@ document.getElementById('btnClearHistory').onclick = () => {
   renderHistory(state);
 };
 document.getElementById('topUpgrade').onclick = handleUpgrade;
+
+// ── CALENDAR MODE ─────────────────────────────────────────────────
+let calView = 'month';
+
+function enterCalendarMode() {
+  showScreen('calendarMode');
+  renderCalendar();
+}
+
+function renderCalendar() {
+  // Update month label
+  const hdr = document.getElementById('calGridHeader');
+  if (hdr) {
+    const now = new Date();
+    hdr.textContent = calView === 'month'
+      ? now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      : `Week of ${getWeekStart()}`;
+  }
+  renderCalendarView(state, calView);
+  // Sync active button styles
+  document.getElementById('btnCalMonth')?.classList.toggle('active', calView === 'month');
+  document.getElementById('btnCalWeek')?.classList.toggle('active', calView === 'week');
+}
+
+function getWeekStart() {
+  const now = new Date();
+  const d   = new Date(now);
+  d.setDate(now.getDate() - now.getDay());
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+document.getElementById('btnCalBack').onclick   = () => { showScreen('parentMode'); renderParent(); };
+document.getElementById('btnCalMonth').onclick  = () => { calView = 'month'; renderCalendar(); };
+document.getElementById('btnCalWeek').onclick   = () => { calView = 'week';  renderCalendar(); };
 
 // ── KID SELECTOR ─────────────────────────────────────────────────
 function showKidSelector() {

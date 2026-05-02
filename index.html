@@ -67,6 +67,7 @@
       <div class="headerActions">
         <button class="iconBtn" id="btnAddKid">+ Kid</button>
         <button class="iconBtn" id="btnSettings">Settings</button>
+        <button class="iconBtn" id="btnCalendar">📅 Calendar</button>
         <button class="iconBtn proUpgradeBtn" id="topUpgrade">Upgrade Pro</button>
         <button class="iconBtn" id="btnSwitchToKid">Kid View</button>
       </div>
@@ -80,6 +81,33 @@
           <button class="linkBtn" id="btnClearHistory">Clear all</button>
         </div>
         <div class="historyList" id="historyList"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- CALENDAR VIEW -->
+  <div id="calendarMode" class="appShell" hidden>
+    <header class="parentHeader">
+      <div class="headerBrand">
+        <span class="headerEmoji">📅</span>
+        <span class="headerTitle">Family Calendar</span>
+      </div>
+      <div class="headerActions">
+        <button class="iconBtn calViewBtn active" id="btnCalMonth">Month</button>
+        <button class="iconBtn calViewBtn" id="btnCalWeek">Week</button>
+        <button class="iconBtn" id="btnCalBack">← Back</button>
+      </div>
+    </header>
+    <main class="calMain">
+      <!-- Today's snapshot strip -->
+      <section class="calTodaySection">
+        <div class="calSectionLabel">Today at a Glance</div>
+        <div class="calTodayStrip" id="calTodayStrip"></div>
+      </section>
+      <!-- Month / Week grid -->
+      <section class="calGridSection">
+        <div class="calGridHeader" id="calGridHeader"></div>
+        <div id="calGrid"></div>
       </section>
     </main>
   </div>
