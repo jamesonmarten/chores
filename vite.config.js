@@ -1,12 +1,10 @@
 import { defineConfig } from 'vite';
 
 // https://vitejs.dev/config/
-const isCapacitor = process.env.CAPACITOR_BUILD === '1';
-
 export default defineConfig({
-  // Web: served at https://devcabin-ai.tech/chores/
-  // Capacitor iOS: needs base '/' (assets are bundled locally)
-  base: isCapacitor ? '/' : '/chores/',
+  // Served at https://products.devcabin.tech (Vercel) — base is always '/'
+  // Capacitor iOS also uses '/' — no special flag needed
+  base: '/',
   build: {
     outDir: 'dist',
     emptyOutDir: true,

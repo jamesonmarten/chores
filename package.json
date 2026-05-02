@@ -7,7 +7,7 @@
     "dev": "vite",
     "dev:server": "node server/index.js",
     "build": "vite build",
-    "build:ios": "CAPACITOR_BUILD=1 vite build",
+    "build:ios": "vite build",
     "preview": "vite preview",
     "cap:add:ios": "cap add ios",
     "cap:sync": "npm run build:ios && cap sync ios",

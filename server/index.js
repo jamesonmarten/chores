@@ -9,6 +9,36 @@ import Stripe from 'stripe';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const app = express();
 
+// ─── Resolve price ID from product ID at startup ──────────────────────────────
+// Supports either STRIPE_PRICE_ID (price_xxx) or STRIPE_PRODUCT_ID (prod_xxx).
+// If only a product ID is set, we fetch its first active price automatically.
+let resolvedPriceId = process.env.STRIPE_PRICE_ID || null;
+
+async function resolvePriceId() {
+  if (resolvedPriceId) {
+    console.log(`💳 Using price ID from env: ${resolvedPriceId}`);
+    return;
+  }
+  const productId = process.env.STRIPE_PRODUCT_ID;
+  if (!productId) {
+    console.warn('⚠️  Neither STRIPE_PRICE_ID nor STRIPE_PRODUCT_ID is set in .env');
+    return;
+  }
+  try {
+    const prices = await stripe.prices.list({ product: productId, active: true, limit: 10 });
+    // Prefer the recurring $6/mo price; fall back to first active price
+    const recurring = prices.data.find(p => p.recurring);
+    resolvedPriceId = (recurring || prices.data[0])?.id || null;
+    if (resolvedPriceId) {
+      console.log(`💳 Resolved price ID from product ${productId}: ${resolvedPriceId}`);
+    } else {
+      console.error(`❌ No active prices found for product ${productId}`);
+    }
+  } catch (err) {
+    console.error('Failed to resolve price from product ID:', err.message);
+  }
+}
+
 // ─── CORS ────────────────────────────────────────────────────────────────────
 app.use(cors({ origin: process.env.CLIENT_URL || '*' }));
 
@@ -63,7 +93,7 @@ app.post('/create-checkout-session', async (req, res) => {
       payment_method_types: ['card'],
       line_items: [
         {
-          price: process.env.STRIPE_PRICE_ID,
+          price: resolvedPriceId,
           quantity: 1,
         },
       ],
@@ -100,4 +130,6 @@ app.get('/pro-status', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 4242;
-app.listen(PORT, () => console.log(`🚀 Stripe server listening on http://localhost:${PORT}`));
+resolvePriceId().then(() => {
+  app.listen(PORT, () => console.log(`🚀 Stripe server listening on http://localhost:${PORT}`));
+});
