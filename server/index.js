@@ -58,6 +58,26 @@ async function resolvePriceId() {
 // ─── CORS ────────────────────────────────────────────────────────────────────
 app.use(cors({ origin: process.env.CLIENT_URL || '*' }));
 
+// ─── Tiny request logger ─────────────────────────────────────────────────────
+app.use((req, _res, next) => {
+  const t = new Date().toISOString();
+  console.log(`${t} ${req.method} ${req.url}`);
+  next();
+});
+
+// ─── Health check (used by Render & smoke test) ──────────────────────────────
+app.get('/health', (_req, res) => {
+  res.json({
+    ok: true,
+    uptime: process.uptime(),
+    priceId: resolvedPriceId ? 'set' : 'missing',
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET ? 'set' : 'missing',
+    stripeKey: process.env.STRIPE_SECRET_KEY ? 'set' : 'missing',
+    clientUrl: process.env.CLIENT_URL || null,
+    time: new Date().toISOString(),
+  });
+});
+
 // ─── Raw body for Stripe webhooks (must come BEFORE express.json) ─────────────
 app.post(
   '/webhook',

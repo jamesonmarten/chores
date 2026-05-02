@@ -11,6 +11,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Verify required secrets
+        env:
+          VERCEL_TOKEN:                ${{ secrets.VERCEL_TOKEN }}
+          VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
+          VITE_API_URL:                ${{ secrets.VITE_API_URL }}
+        run: |
+          missing=0
+          for v in VERCEL_TOKEN VITE_STRIPE_PUBLISHABLE_KEY VITE_API_URL; do
+            if [ -z "${!v}" ]; then
+              echo "::error::Missing required secret: $v"
+              missing=1
+            fi
+          done
+          [ "$missing" -eq 0 ] || exit 1
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -34,3 +49,11 @@ jobs:
           vercel-project-id: prj_hIvhBKAljon7UjJz6kmDzoSJUs5j
           working-directory: ./
           vercel-args: '--prod'
+
+      - name: Smoke test live site
+        if: success()
+        env:
+          FRONTEND: https://chores.devcabin.tech
+          API:      ${{ secrets.VITE_API_URL }}
+        run: node scripts/smoke-test.mjs
+        continue-on-error: true   # don't fail the deploy if API is still warming up
