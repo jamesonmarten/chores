@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Family Chores">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#020617">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="application-name" content="Family Chores &amp; More">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='38' fill='%23020617'/%3E%3Cpath d='M44 93l27 27 65-73' fill='none' stroke='%2322c55e' stroke-width='18' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='136' cy='132' r='18' fill='%230ea5e9'/%3E%3C/svg%3E">
+  <title>Family Chores &amp; More</title>
+</head>
+<body>
+  <div id="installBanner" class="installBanner" hidden>
+    <strong>Install this app</strong>
+    <span>On iPhone or iPad: tap Share, then Add to Home Screen.</span>
+    <button id="dismissInstall" type="button">Got it</button>
+  </div>
+  <main class="app">
+    <section class="top">
+      <div>
+        <div class="eyebrow"><span class="spark">✨</span> Family Chores &amp; More</div>
+        <h1 class="heroTitle">Turn chores into <span>daily wins.</span></h1>
+        <div class="sub">A playful family dashboard where kids tap tasks, earn 100 daily points, unlock treats, and discover hidden Easter egg surprises.</div>
+      </div>
+      <aside class="pricing">
+        <small>Family Pro</small><b>$6/mo</b>
+        <small>Custom rewards, printable charts, streaks, allowance mode, and parent controls.</small>
+        <button id="topUpgrade" class="proBtn">Unlock Pro</button>
+      </aside>
+    </section>
+    <section class="stats">
+      <div class="stat"><strong id="statPoints">0</strong><span>points earned today</span></div>
+      <div class="stat"><strong id="statTreats">0</strong><span>treats unlocked</span></div>
+      <div class="stat"><strong id="statEggs">0</strong><span>Easter eggs found</span></div>
+      <div class="stat"><strong>100</strong><span>daily goal per kid</span></div>
+    </section>
+    <section id="familyGrid" class="familyGrid"></section>
+    <section class="calendar">
+      <div class="calendarHeader">
+        <div>
+          <h2>This Month</h2>
+          <div class="sub">Calendar shows daily progress, not just activity dots.</div>
+        </div>
+        <div class="calendarLegend">
+          <span class="legendItem">Green = 100/100</span>
+          <span class="legendItem">Gold = in progress</span>
+          <span class="legendItem">Dark = not started</span>
+        </div>
+      </div>
+      <div id="todayFocus" class="todayFocus"></div>
+      <div id="calendar" class="monthGrid"></div>
+    </section>
+  </main>
+  <div id="modal" class="modal">
+    <div class="modalBox">
+      <div id="eggIcon"></div>
+      <h2 id="modalTitle">Great job!</h2>
+      <p id="modalText"></p>
+      <div id="modalPrice" class="price" style="display:none">$6/mo</div>
+      <button id="closeModal" class="btn">Close</button>
+    </div>
+  </div>
+  <div id="confettiLayer" class="confetti"></div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
