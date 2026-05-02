@@ -1,0 +1,13 @@
+{
+  "appId": "com.devcabin.familychores",
+  "appName": "Family Chores",
+  "webDir": "dist",
+  "plugins": {
+    "Browser": {},
+    "App": {}
+  },
+  "ios": {
+    "allowsLinkPreview": false,
+    "backgroundColor": "#020617"
+  }
+}

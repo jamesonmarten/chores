@@ -5,11 +5,29 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "dev:server": "node server/index.js",
+    "build": "vite build",
+    "preview": "vite preview",
+    "cap:init": "cap init 'Family Chores' com.devcabin.familychores --web-dir dist",
+    "cap:add:ios": "cap add ios",
+    "cap:sync": "vite build && cap sync ios",
+    "cap:open": "cap open ios",
+    "ios": "npm run cap:sync && npm run cap:open"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.3.1",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "stripe": "^22.1.0",
     "typescript": "~6.0.2",
     "vite": "^8.0.10"
+  },
+  "dependencies": {
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/browser": "^8.0.3",
+    "@capacitor/core": "^8.3.1",
+    "@capacitor/ios": "^8.3.1",
+    "@stripe/stripe-js": "^9.4.0"
   }
 }

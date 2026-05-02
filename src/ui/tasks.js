@@ -3,7 +3,7 @@
 import { KIDS } from '../data/kids.js';
 import { TASKS } from '../data/tasks.js';
 import { EGGS } from '../data/eggs.js';
-import { getPoints, setPoints, kidState } from '../state/store.js';
+import { getPoints, setPoints, kidState, isPro } from '../state/store.js';
 import { today, taskKey } from '../utils/date.js';
 import { launchConfetti, rollEgg } from '../utils/helpers.js';
 import { showModal } from './render.js';
@@ -12,8 +12,9 @@ import { showModal } from './render.js';
  * Renders all kid columns into the family grid.
  * @param {object} state
  * @param {Function} onRender - callback to re-render the full app
+ * @param {Function} onUpgrade - callback to trigger Stripe checkout
  */
-export function renderColumns(state, onRender) {
+export function renderColumns(state, onRender, onUpgrade) {
   const familyGridEl = document.getElementById('familyGrid');
   familyGridEl.innerHTML = '';
 
@@ -46,7 +47,7 @@ export function renderColumns(state, onRender) {
       <div class="rewardText">${p >= 100 ? 'Reward unlocked. Great work.' : "Complete today\u2019s quest to unlock a treat."}</div>
       <div class="taskList" id="tasks_${k.id}"></div>
       <div class="actions">
-        <button class="btn orange" data-upgrade="${k.id}">Upgrade Pro</button>
+        <button class="btn orange" data-upgrade="${k.id}">${isPro(state) ? '⭐ Pro Active' : 'Upgrade Pro'}</button>
         <button class="btn red" data-reset="${k.id}">Reset Day</button>
       </div>`;
 
@@ -71,7 +72,7 @@ export function renderColumns(state, onRender) {
 
     card.querySelector('[data-reset]').onclick   = () => { resetDay(state, k.id, onRender); };
     card.querySelector('[data-upgrade]').onclick = () => {
-      showModal('Family Pro', 'Unlock custom rewards, printable charts, allowance mode, streaks, parent approval, bonus quests, and reward history.', true, '🚀');
+      if (onUpgrade) onUpgrade();
     };
   });
 }

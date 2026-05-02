@@ -11,10 +11,30 @@ const KEY = 'familyChoresAndMoreV1';
  */
 function fresh() {
   return {
+    isPro: false,
+    familyId: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36),
     kids: Object.fromEntries(
       KIDS.map(k => [k.id, { pointsByDate: {}, done: {}, treats: 0, eggs: 0 }])
     ),
   };
+}
+
+/**
+ * Marks the family as Pro and persists.
+ * @param {object} state
+ */
+export function activatePro(state) {
+  state.isPro = true;
+  save(state);
+}
+
+/**
+ * Returns whether the family has an active Pro subscription.
+ * @param {object} state
+ * @returns {boolean}
+ */
+export function isPro(state) {
+  return !!state.isPro;
 }
 
 /**
