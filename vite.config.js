@@ -1,13 +1,19 @@
 import { defineConfig } from 'vite';
+import { resolve } from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  // Served at https://products.devcabin.tech (Vercel) — base is always '/'
-  // Capacitor iOS also uses '/' — no special flag needed
+  // Served at https://chores.devcabin.tech (Vercel) — base is always '/'
   base: '/',
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        demo: resolve(__dirname, 'demo.html'),
+      },
+    },
   },
   server: {
     // Proxy API calls to the local Express server during development

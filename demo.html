@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+  <meta name="theme-color" content="#020810">
+  <title>Family Chores & More — The Skylight Alternative Your Family Deserves</title>
+  <meta name="description" content="A beautiful, gamified family chore tracker that runs on any device. Free forever, or unlock Pro for $6/mo. No expensive hardware required.">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+
+    :root {
+      --bg: #020810;
+      --card: #0c1424;
+      --card2: #111d30;
+      --ink: #eef4ff;
+      --muted: #7eb0d4;
+      --muted2: #a8c8e8;
+      --line: rgba(100,170,255,.12);
+      --green: #22c55e;
+      --green2: #4ade80;
+      --orange: #f59e0b;
+      --blue: #38bdf8;
+      --blue2: #7dd3fc;
+      --purple: #a78bfa;
+      --purple2: #c4b5fd;
+      --pink: #f472b6;
+      --red: #f87171;
+    }
+
+    * { box-sizing: border-box; margin: 0; }
+    html { scroll-behavior: smooth; background: var(--bg); }
+
+    body {
+      font-family: Inter, system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Ambient background ──────────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 70% 60% at 15% 20%, rgba(56,189,248,.1) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 50% at 85% 15%, rgba(167,139,250,.09) 0%, transparent 65%),
+        radial-gradient(ellipse 80% 60% at 50% 90%, rgba(34,197,94,.07) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    section, header, footer { position: relative; z-index: 1; }
+
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ── HERO ────────────────────────────────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center;
+      padding: 80px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, transparent 60%, var(--bg) 100%);
+      pointer-events: none;
+    }
+
+    .heroInner { position: relative; z-index: 2; max-width: 860px; }
+
+    .heroBadge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(56,189,248,.1);
+      border: 1px solid rgba(56,189,248,.3);
+      border-radius: 999px;
+      padding: 8px 18px;
+      font-size: .82rem;
+      font-weight: 800;
+      color: var(--blue2);
+      margin-bottom: 28px;
+      animation: fadeSlideUp .6s ease both;
+    }
+    .heroBadge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green2); animation: pulse 2s infinite; }
+
+    .heroTitle {
+      font-size: clamp(2.8rem, 7vw, 5.5rem);
+      font-weight: 900;
+      line-height: .92;
+      letter-spacing: -.02em;
+      margin-bottom: 28px;
+      animation: fadeSlideUp .7s ease .1s both;
+    }
+    .heroTitle .grad {
+      background: linear-gradient(135deg, var(--blue), var(--purple), var(--pink), var(--orange));
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: gradShift 6s ease infinite;
+    }
+
+    .heroSub {
+      font-size: clamp(1.05rem, 2.5vw, 1.35rem);
+      color: var(--muted2);
+      font-weight: 600;
+      max-width: 680px;
+      margin: 0 auto 40px;
+      line-height: 1.55;
+      animation: fadeSlideUp .7s ease .2s both;
+    }
+
+    .heroCTAs {
+      display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+      animation: fadeSlideUp .7s ease .3s both;
+    }
+    .ctaBtn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 16px 32px;
+      border-radius: 16px;
+      font-size: 1.05rem; font-weight: 900;
+      border: none; cursor: pointer;
+      transition: transform .15s, box-shadow .15s, filter .15s;
+      text-decoration: none;
+    }
+    .ctaBtn:hover { transform: translateY(-2px); filter: brightness(1.08); text-decoration: none; }
+    .ctaBtn:active { transform: scale(.97); }
+    .ctaPrimary {
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      color: #fff;
+      box-shadow: 0 16px 48px rgba(56,189,248,.25);
+    }
+    .ctaSecondary {
+      background: rgba(255,255,255,.07);
+      border: 1px solid var(--line);
+      color: var(--ink);
+    }
+
+    /* Device mockup float */
+    .heroDevices {
+      display: flex; justify-content: center; gap: 24px;
+      margin-top: 60px;
+      animation: fadeSlideUp .8s ease .4s both;
+    }
+    .deviceFrame {
+      background: var(--card);
+      border: 2px solid var(--line);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 30px 80px rgba(0,0,0,.5);
+      transition: transform .3s;
+    }
+    .deviceFrame:hover { transform: translateY(-6px) scale(1.02); }
+    .deviceTablet {
+      width: 400px; height: 280px;
+    }
+    .devicePhone {
+      width: 180px; height: 340px;
+    }
+    .deviceInner {
+      width: 100%; height: 100%;
+      padding: 14px;
+      display: flex; flex-direction: column; gap: 8px;
+      background: linear-gradient(160deg, #060d1f, #0a1a30);
+    }
+    .devHeader {
+      display: flex; align-items: center; gap: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+      font-size: .72rem; font-weight: 900; color: var(--muted2);
+    }
+    .devKidRow {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+    .devKidEmoji { font-size: 1.2rem; }
+    .devKidInfo { flex: 1; }
+    .devKidName { font-size: .72rem; font-weight: 900; color: var(--ink); }
+    .devKidBar { height: 4px; background: rgba(255,255,255,.1); border-radius: 99px; margin-top: 3px; overflow: hidden; }
+    .devKidFill { height: 100%; border-radius: 99px; }
+    .devKidPct { font-size: .68rem; font-weight: 900; }
+
+    .devChoreGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; flex: 1; }
+    .devChore {
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 8px;
+      text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    .devChore.done { background: rgba(34,197,94,.12); border-color: rgba(34,197,94,.3); }
+    .devChoreEmoji { font-size: 1.3rem; }
+    .devChoreTitle { font-size: .58rem; font-weight: 800; color: var(--muted2); }
+    .devChorePts { font-size: .55rem; font-weight: 900; color: var(--green); }
+
+    /* ── SOCIAL PROOF ────────────────────────────────────────────── */
+    .socialProof {
+      padding: 60px 0;
+      text-align: center;
+    }
+    .spTitle { font-size: .8rem; font-weight: 900; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 24px; }
+    .spLogos {
+      display: flex; gap: 40px; justify-content: center; align-items: center; flex-wrap: wrap;
+      opacity: .6;
+    }
+    .spIcon { font-size: 2rem; filter: grayscale(1); transition: filter .3s; }
+    .spIcon:hover { filter: none; }
+
+    /* ── THE PROBLEM ─────────────────────────────────────────────── */
+    .problem {
+      padding: 100px 0;
+    }
+    .splitGrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: center;
+    }
+    .problemCard {
+      background: linear-gradient(160deg, rgba(248,113,113,.08), rgba(248,113,113,.03));
+      border: 1px solid rgba(248,113,113,.2);
+      border-radius: 28px;
+      padding: 40px;
+    }
+    .problemLabel {
+      display: inline-block;
+      background: rgba(248,113,113,.15);
+      border: 1px solid rgba(248,113,113,.3);
+      color: var(--red);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: .78rem; font-weight: 900;
+      margin-bottom: 18px;
+    }
+    .problemTitle {
+      font-size: 1.8rem;
+      font-weight: 900;
+      margin-bottom: 16px;
+      line-height: 1.15;
+    }
+    .problemList {
+      list-style: none; padding: 0;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .problemList li {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: .95rem; color: var(--muted2); font-weight: 600;
+      line-height: 1.45;
+    }
+    .problemList li::before {
+      content: '✕'; color: var(--red); font-weight: 900;
+      flex-shrink: 0; margin-top: 1px;
+    }
+
+    .solutionCard {
+      background: linear-gradient(160deg, rgba(34,197,94,.08), rgba(56,189,248,.05));
+      border: 1px solid rgba(34,197,94,.25);
+      border-radius: 28px;
+      padding: 40px;
+    }
+    .solutionLabel {
+      display: inline-block;
+      background: rgba(34,197,94,.15);
+      border: 1px solid rgba(34,197,94,.3);
+      color: var(--green2);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: .78rem; font-weight: 900;
+      margin-bottom: 18px;
+    }
+    .solutionTitle {
+      font-size: 1.8rem;
+      font-weight: 900;
+      margin-bottom: 16px;
+      line-height: 1.15;
+    }
+    .solutionList {
+      list-style: none; padding: 0;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .solutionList li {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: .95rem; color: var(--muted2); font-weight: 600;
+      line-height: 1.45;
+    }
+    .solutionList li::before {
+      content: '✓'; color: var(--green2); font-weight: 900;
+      flex-shrink: 0; margin-top: 1px;
+    }
+
+    /* ── FEATURES ────────────────────────────────────────────────── */
+    .features { padding: 100px 0; }
+
+    .sectionEyebrow {
+      font-size: .78rem; font-weight: 900; color: var(--blue);
+      text-transform: uppercase; letter-spacing: .1em;
+      text-align: center; margin-bottom: 10px;
+    }
+    .sectionTitle {
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 900; text-align: center;
+      margin-bottom: 12px; line-height: 1.1;
+    }
+    .sectionSub {
+      text-align: center; color: var(--muted2);
+      font-size: 1.05rem; font-weight: 600;
+      max-width: 640px; margin: 0 auto 50px;
+      line-height: 1.5;
+    }
+
+    .featureGrid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+    .featureCard {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 28px;
+      transition: transform .2s, border-color .2s, box-shadow .2s;
+    }
+    .featureCard:hover {
+      transform: translateY(-4px);
+      border-color: rgba(120,180,255,.25);
+      box-shadow: 0 24px 60px rgba(0,0,0,.4);
+    }
+    .featureEmoji { font-size: 2.2rem; margin-bottom: 14px; display: block; }
+    .featureLabel { font-size: 1.05rem; font-weight: 900; margin-bottom: 8px; }
+    .featureDesc { font-size: .88rem; color: var(--muted2); font-weight: 600; line-height: 1.5; }
+    .featureTag {
+      display: inline-block; margin-top: 12px;
+      background: rgba(167,139,250,.12);
+      border: 1px solid rgba(167,139,250,.3);
+      color: var(--purple2);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: .72rem; font-weight: 900;
+    }
+    .featureTag.free {
+      background: rgba(34,197,94,.12);
+      border-color: rgba(34,197,94,.3);
+      color: var(--green2);
+    }
+
+    /* ── COMPARISON ──────────────────────────────────────────────── */
+    .comparison { padding: 100px 0; }
+
+    .compTable {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      overflow: hidden;
+    }
+    .compTable th, .compTable td {
+      padding: 16px 20px;
+      text-align: left;
+      font-size: .92rem;
+      border-bottom: 1px solid var(--line);
+    }
+    .compTable th {
+      font-weight: 900;
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+      background: rgba(255,255,255,.03);
+    }
+    .compTable td { font-weight: 700; color: var(--muted2); }
+    .compTable tr:last-child td { border-bottom: 0; }
+
+    .colOurs { text-align: center !important; min-width: 140px; }
+    .colOurs.th {
+      background: linear-gradient(135deg, rgba(56,189,248,.12), rgba(167,139,250,.1)) !important;
+      color: var(--blue2) !important;
+    }
+    .colSkylight { text-align: center !important; min-width: 140px; }
+    .compYes { color: var(--green2) !important; font-weight: 900 !important; }
+    .compNo  { color: var(--red) !important; font-weight: 900 !important; }
+    .compMeh { color: var(--muted) !important; }
+
+    .compHighlight {
+      background: rgba(56,189,248,.05) !important;
+    }
+
+    .savingsCallout {
+      margin-top: 30px;
+      background: linear-gradient(135deg, rgba(34,197,94,.1), rgba(56,189,248,.08));
+      border: 1px solid rgba(34,197,94,.25);
+      border-radius: 20px;
+      padding: 28px 36px;
+      display: flex; align-items: center; gap: 24px;
+      flex-wrap: wrap;
+    }
+    .savingsBig {
+      font-size: 3rem; font-weight: 900;
+      background: linear-gradient(135deg, var(--green2), var(--blue));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .savingsText { flex: 1; min-width: 200px; }
+    .savingsText strong { font-size: 1.15rem; font-weight: 900; display: block; margin-bottom: 4px; color: var(--ink); }
+    .savingsText span { font-size: .92rem; color: var(--muted2); font-weight: 600; }
+
+    /* ── PRICING ─────────────────────────────────────────────────── */
+    .pricing { padding: 100px 0; }
+
+    .pricingGrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .priceCard {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 36px 30px;
+      text-align: center;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .priceCard:hover { transform: translateY(-4px); box-shadow: 0 30px 80px rgba(0,0,0,.4); }
+    .priceCard.featured {
+      border-color: rgba(56,189,248,.4);
+      background: linear-gradient(160deg, rgba(56,189,248,.08), rgba(167,139,250,.06));
+      position: relative;
+    }
+    .priceCard.featured::before {
+      content: 'MOST POPULAR';
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      color: #fff;
+      font-size: .7rem; font-weight: 900; letter-spacing: .08em;
+      padding: 5px 14px; border-radius: 999px;
+    }
+    .priceTier { font-size: .82rem; font-weight: 900; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 12px; }
+    .priceAmount { font-size: 3.2rem; font-weight: 900; line-height: 1; margin-bottom: 4px; }
+    .pricePeriod { font-size: .88rem; color: var(--muted); font-weight: 700; margin-bottom: 24px; }
+    .priceFeatureList {
+      list-style: none; padding: 0; text-align: left;
+      display: flex; flex-direction: column; gap: 10px;
+      margin-bottom: 28px;
+    }
+    .priceFeatureList li {
+      font-size: .88rem; font-weight: 700; color: var(--muted2);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .priceFeatureList li::before { content: '✓'; color: var(--green2); font-weight: 900; }
+    .priceBtn {
+      display: block; width: 100%;
+      padding: 14px; border-radius: 14px;
+      font-size: 1rem; font-weight: 900;
+      border: none; cursor: pointer;
+      transition: transform .15s, filter .15s;
+      color: #fff;
+      text-decoration: none; text-align: center;
+    }
+    .priceBtn:hover { transform: translateY(-2px); filter: brightness(1.1); text-decoration: none; }
+    .priceBtnFree { background: rgba(255,255,255,.1); border: 1px solid var(--line); }
+    .priceBtnPro { background: linear-gradient(135deg, var(--blue), var(--purple)); box-shadow: 0 12px 36px rgba(56,189,248,.25); }
+
+    /* ── DEVICES ─────────────────────────────────────────────────── */
+    .devices { padding: 100px 0; text-align: center; }
+
+    .deviceShowcase {
+      display: flex; justify-content: center; align-items: flex-end; gap: 32px;
+      margin-top: 50px; flex-wrap: wrap;
+    }
+    .dsDevice {
+      background: var(--card);
+      border: 2px solid var(--line);
+      border-radius: 22px;
+      overflow: hidden;
+      text-align: center;
+      transition: transform .3s;
+      display: flex; flex-direction: column;
+    }
+    .dsDevice:hover { transform: translateY(-6px); }
+    .dsScreen {
+      background: linear-gradient(160deg, #071528, #0a1a30);
+      padding: 18px;
+      flex: 1;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 3rem;
+    }
+    .dsLabel {
+      padding: 12px;
+      font-size: .8rem; font-weight: 900; color: var(--muted2);
+      border-top: 1px solid var(--line);
+    }
+    .dsTablet { width: 280px; height: 210px; }
+    .dsPhone  { width: 150px; height: 280px; }
+    .dsLaptop { width: 320px; height: 220px; border-radius: 16px 16px 0 0; }
+
+    .deviceNote {
+      margin-top: 30px;
+      font-size: .92rem;
+      color: var(--muted2);
+      font-weight: 700;
+    }
+    .deviceNote strong { color: var(--ink); }
+
+    /* ── TESTIMONIALS ────────────────────────────────────────────── */
+    .testimonials { padding: 80px 0; }
+
+    .testGrid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
+    }
+    .testCard {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 28px;
+    }
+    .testStars { color: var(--orange); font-size: 1rem; margin-bottom: 12px; }
+    .testQuote { font-size: .92rem; color: var(--muted2); font-weight: 600; line-height: 1.55; margin-bottom: 16px; font-style: italic; }
+    .testAuthor { font-size: .82rem; font-weight: 900; color: var(--ink); }
+    .testRole { font-size: .76rem; color: var(--muted); font-weight: 700; }
+
+    /* ── FINAL CTA ───────────────────────────────────────────────── */
+    .finalCTA {
+      padding: 120px 0;
+      text-align: center;
+    }
+    .finalCTA .sectionTitle {
+      font-size: clamp(2.4rem, 5vw, 3.8rem);
+      margin-bottom: 20px;
+    }
+
+    /* ── FOOTER ──────────────────────────────────────────────────── */
+    .footer {
+      padding: 40px 0;
+      text-align: center;
+      border-top: 1px solid var(--line);
+    }
+    .footer p { font-size: .82rem; color: var(--muted); font-weight: 700; }
+    .footer a { color: var(--blue); }
+
+    /* ── Animations ──────────────────────────────────────────────── */
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: none; }
+    }
+    @keyframes gradShift {
+      0%, 100% { background-position: 0% 50%; }
+      50%       { background-position: 100% 50%; }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: .5; transform: scale(1.3); }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-8px); }
+    }
+
+    /* Scroll-triggered */
+    .reveal {
+      opacity: 0; transform: translateY(30px);
+      transition: opacity .7s ease, transform .7s ease;
+    }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    /* ── Responsive ──────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .splitGrid { grid-template-columns: 1fr; }
+      .featureGrid { grid-template-columns: 1fr 1fr; }
+      .testGrid { grid-template-columns: 1fr; }
+      .pricingGrid { grid-template-columns: 1fr; max-width: 420px; }
+      .heroDevices { flex-direction: column; align-items: center; }
+      .deviceTablet { width: 320px; height: 230px; }
+      .devicePhone { width: 160px; height: 300px; }
+    }
+    @media (max-width: 600px) {
+      .featureGrid { grid-template-columns: 1fr; }
+      .compTable th, .compTable td { padding: 12px 10px; font-size: .8rem; }
+      .deviceShowcase { gap: 16px; }
+      .dsTablet { width: 220px; height: 170px; }
+      .dsPhone  { width: 120px; height: 220px; }
+      .dsLaptop { width: 240px; height: 170px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════ HERO ═══════════════ -->
+  <section class="hero">
+    <div class="heroInner">
+      <div class="heroBadge"><span class="dot"></span> Now available — Web, iOS, iPad, Android</div>
+      <h1 class="heroTitle">
+        The <span class="grad">Skylight killer</span><br>
+        your family actually needs.
+      </h1>
+      <p class="heroSub">
+        A beautiful, gamified chore tracker that runs on <strong>any device</strong> you already own.
+        No $170 calendar. No $40/year subscriptions. Just a web app that works everywhere.
+      </p>
+      <div class="heroCTAs">
+        <a href="/index.html" class="ctaBtn ctaPrimary">🚀 Try It Free</a>
+        <a href="#comparison" class="ctaBtn ctaSecondary">See the Comparison ↓</a>
+      </div>
+
+      <div class="heroDevices">
+        <!-- Tablet mockup -->
+        <div class="deviceFrame deviceTablet">
+          <div class="deviceInner">
+            <div class="devHeader">✨ Family Chores &nbsp;·&nbsp; Parent View</div>
+            <div class="devKidRow">
+              <span class="devKidEmoji">🦁</span>
+              <div class="devKidInfo">
+                <div class="devKidName">Lincoln</div>
+                <div class="devKidBar"><div class="devKidFill" style="width:75%;background:#35c976"></div></div>
+              </div>
+              <span class="devKidPct" style="color:#35c976">75%</span>
+            </div>
+            <div class="devKidRow">
+              <span class="devKidEmoji">⭐</span>
+              <div class="devKidInfo">
+                <div class="devKidName">Sienna</div>
+                <div class="devKidBar"><div class="devKidFill" style="width:100%;background:#8b6cff"></div></div>
+              </div>
+              <span class="devKidPct" style="color:#8b6cff">100%</span>
+            </div>
+            <div class="devKidRow">
+              <span class="devKidEmoji">👶</span>
+              <div class="devKidInfo">
+                <div class="devKidName">Josie</div>
+                <div class="devKidBar"><div class="devKidFill" style="width:40%;background:#ff5ea8"></div></div>
+              </div>
+              <span class="devKidPct" style="color:#ff5ea8">40%</span>
+            </div>
+          </div>
+        </div>
+        <!-- Phone mockup -->
+        <div class="deviceFrame devicePhone">
+          <div class="deviceInner">
+            <div class="devHeader">⭐ Lincoln's Chores</div>
+            <div class="devChoreGrid">
+              <div class="devChore done"><span class="devChoreEmoji">🧩</span><span class="devChoreTitle">Pick up toys</span><span class="devChorePts">+20 ✓</span></div>
+              <div class="devChore done"><span class="devChoreEmoji">👕</span><span class="devChoreTitle">Clothes away</span><span class="devChorePts">+15 ✓</span></div>
+              <div class="devChore"><span class="devChoreEmoji">🍽️</span><span class="devChoreTitle">Help dishes</span><span class="devChorePts">+15</span></div>
+              <div class="devChore"><span class="devChoreEmoji">💛</span><span class="devChoreTitle">Kind helper</span><span class="devChorePts">+20</span></div>
+              <div class="devChore"><span class="devChoreEmoji">🏠</span><span class="devChoreTitle">Clean room</span><span class="devChorePts">+30</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ COMPATIBLE DEVICES ═══════════════ -->
+  <section class="socialProof">
+    <div class="container">
+      <div class="spTitle">Works on every device you already own</div>
+      <div class="spLogos">
+        <span class="spIcon" title="iPhone">📱</span>
+        <span class="spIcon" title="iPad">📲</span>
+        <span class="spIcon" title="Android">🤖</span>
+        <span class="spIcon" title="Laptop">💻</span>
+        <span class="spIcon" title="Desktop">🖥️</span>
+        <span class="spIcon" title="Any Browser">🌐</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ THE PROBLEM / SOLUTION ═══════════════ -->
+  <section class="problem reveal" id="problem">
+    <div class="container">
+      <div class="splitGrid">
+        <div class="problemCard">
+          <span class="problemLabel">☁️ Skylight Calendar</span>
+          <h2 class="problemTitle">Expensive hardware that locks you in.</h2>
+          <ul class="problemList">
+            <li>$170 for a proprietary touchscreen tablet</li>
+            <li>$39/year "Plus" subscription for basic features</li>
+            <li>No chore gamification — just static lists</li>
+            <li>Only works on their hardware — nothing else</li>
+            <li>No allowance tracking, no streaks, no fun</li>
+            <li>Kids lose interest after the first week</li>
+            <li>Over $300 in year one costs</li>
+          </ul>
+        </div>
+        <div class="solutionCard">
+          <span class="solutionLabel">✨ Family Chores & More</span>
+          <h2 class="solutionTitle">A better experience on devices you already own.</h2>
+          <ul class="solutionList">
+            <li>Free forever — no hardware purchase needed</li>
+            <li>Pro is just $6/mo — cancel anytime</li>
+            <li>Gamified! Points, levels, streaks, Easter eggs</li>
+            <li>Works on any phone, tablet, laptop, or desktop</li>
+            <li>Built-in allowance tracking per kid</li>
+            <li>Kids stay motivated with daily challenges</li>
+            <li>Install as a home-screen app — feels native</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ FEATURES ═══════════════ -->
+  <section class="features reveal" id="features">
+    <div class="container">
+      <div class="sectionEyebrow">Features</div>
+      <h2 class="sectionTitle">Everything a family needs. Nothing you don't.</h2>
+      <p class="sectionSub">Whether you're managing chores for toddlers, kids, or teenagers — it's all here and fully customizable.</p>
+
+      <div class="featureGrid">
+        <div class="featureCard">
+          <span class="featureEmoji">👶</span>
+          <div class="featureLabel">Custom Kids & Chores</div>
+          <div class="featureDesc">Add unlimited kids with personalized avatars, colors, ages, and tailored task lists. Each kid gets their own world.</div>
+          <span class="featureTag free">Free</span>
+        </div>
+        <div class="featureCard">
+          <span class="featureEmoji">🎮</span>
+          <div class="featureLabel">Gamified Points & Levels</div>
+          <div class="featureDesc">Kids earn points for completing chores, leveling from Rookie to Superstar. Hidden Easter eggs keep them exploring.</div>
+          <span class="featureTag free">Free</span>
+        </div>
+        <div class="featureCard">
+          <span class="featureEmoji">📅</span>
+          <div class="featureLabel">Month & Week Calendar</div>
+          <div class="featureDesc">Beautiful calendar view with per-kid progress bars for every day. See the whole family's month at a glance.</div>
+          <span class="featureTag free">Free</span>
+        </div>
+        <div class="featureCard">
+          <span class="featureEmoji">🔒</span>
+          <div class="featureLabel">Parent PIN Lock</div>
+          <div class="featureDesc">Kids can't tamper with settings. Parent mode is behind a 4-digit PIN. Change it anytime from settings.</div>
+          <span class="featureTag free">Free</span>
+        </div>
+        <div class="featureCard">
+          <span class="featureEmoji">🔥</span>
+          <div class="featureLabel">Streaks & Rewards</div>
+          <div class="featureDesc">Daily streak tracking per kid with best-streak records. Unlock treats and confetti celebrations on 100% days.</div>
+          <span class="featureTag">Pro</span>
+        </div>
+        <div class="featureCard">
+          <span class="featureEmoji">💰</span>
+          <div class="featureLabel">Allowance Tracking</div>
+          <div class="featureDesc">Set per-kid allowance rates. Track total earnings over time. Pay with a single tap from the parent dashboard.</div>
+          <span class="featureTag">Pro</span>
+        </div>
+        <div class="featureCard">
+          <span class="featureEmoji">📊</span>
+          <div class="featureLabel">Activity History</div>
+          <div class="featureDesc">Full timestamped log of every chore completed, reset, and allowance payment. See who's putting in the work.</div>
+          <span class="featureTag">Pro</span>
+        </div>
+        <div class="featureCard">
+          <span class="featureEmoji">🎨</span>
+          <div class="featureLabel">Fully Customizable</div>
+          <div class="featureDesc">Custom emoji avatars, kid colors, task emojis, point values, and helper text. Make it yours.</div>
+          <span class="featureTag free">Free</span>
+        </div>
+        <div class="featureCard">
+          <span class="featureEmoji">📱</span>
+          <div class="featureLabel">Install Anywhere</div>
+          <div class="featureDesc">PWA (installable web app) + native iOS via App Store. Mount an old iPad on the wall — instant family hub.</div>
+          <span class="featureTag free">Free</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ COMPARISON TABLE ═══════════════ -->
+  <section class="comparison reveal" id="comparison">
+    <div class="container">
+      <div class="sectionEyebrow">Head to Head</div>
+      <h2 class="sectionTitle">The honest comparison.</h2>
+      <p class="sectionSub">We built what Skylight should have been — for a fraction of the cost.</p>
+
+      <table class="compTable">
+        <thead>
+          <tr>
+            <th></th>
+            <th class="colOurs th">Family Chores & More</th>
+            <th class="colSkylight">Skylight Calendar</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Hardware required</td>
+            <td class="colOurs compYes">None — use any device</td>
+            <td class="colSkylight compNo">$169 proprietary tablet</td>
+          </tr>
+          <tr class="compHighlight">
+            <td>Monthly cost</td>
+            <td class="colOurs compYes">Free or $6/mo Pro</td>
+            <td class="colSkylight compNo">$3.25/mo ($39/yr)</td>
+          </tr>
+          <tr>
+            <td>Year 1 total cost</td>
+            <td class="colOurs compYes">$0 — $72</td>
+            <td class="colSkylight compNo">$208+</td>
+          </tr>
+          <tr class="compHighlight">
+            <td>Gamified chores</td>
+            <td class="colOurs compYes">✓ Points, levels, Easter eggs</td>
+            <td class="colSkylight compNo">✕</td>
+          </tr>
+          <tr>
+            <td>Streak tracking</td>
+            <td class="colOurs compYes">✓ Daily + best streak</td>
+            <td class="colSkylight compNo">✕</td>
+          </tr>
+          <tr class="compHighlight">
+            <td>Allowance tracking</td>
+            <td class="colOurs compYes">✓ Per-kid with history</td>
+            <td class="colSkylight compNo">✕</td>
+          </tr>
+          <tr>
+            <td>Custom avatars & emojis</td>
+            <td class="colOurs compYes">✓ Fully customizable</td>
+            <td class="colSkylight compMeh">Limited</td>
+          </tr>
+          <tr class="compHighlight">
+            <td>Calendar view</td>
+            <td class="colOurs compYes">✓ Month + week views</td>
+            <td class="colSkylight compYes">✓</td>
+          </tr>
+          <tr>
+            <td>Works on phones</td>
+            <td class="colOurs compYes">✓ Any phone</td>
+            <td class="colSkylight compNo">✕ Tablet only</td>
+          </tr>
+          <tr class="compHighlight">
+            <td>Works on laptops</td>
+            <td class="colOurs compYes">✓ Any browser</td>
+            <td class="colSkylight compNo">✕</td>
+          </tr>
+          <tr>
+            <td>Installable (PWA / App Store)</td>
+            <td class="colOurs compYes">✓ Both</td>
+            <td class="colSkylight compNo">✕ Hardware only</td>
+          </tr>
+          <tr class="compHighlight">
+            <td>Parent PIN lock</td>
+            <td class="colOurs compYes">✓</td>
+            <td class="colSkylight compMeh">Partial</td>
+          </tr>
+          <tr>
+            <td>Kid-friendly UI</td>
+            <td class="colOurs compYes">✓ Big animated cards</td>
+            <td class="colSkylight compMeh">Basic</td>
+          </tr>
+          <tr class="compHighlight">
+            <td>Confetti & celebrations</td>
+            <td class="colOurs compYes">✓ 🎉</td>
+            <td class="colSkylight compNo">✕</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="savingsCallout">
+        <div class="savingsBig">$200+</div>
+        <div class="savingsText">
+          <strong>Save over $200 in year one alone.</strong>
+          <span>No hardware to buy. No expensive subscription. Use an old iPad or any phone you have lying around. Mount it on the fridge. Done.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ DEVICES ═══════════════ -->
+  <section class="devices reveal" id="devices">
+    <div class="container">
+      <div class="sectionEyebrow">Universal</div>
+      <h2 class="sectionTitle">One app. Every screen.</h2>
+      <p class="sectionSub">Use your existing devices. Mount an old iPad on the wall for a dedicated family hub — no extra hardware.</p>
+
+      <div class="deviceShowcase">
+        <div class="dsDevice dsTablet">
+          <div class="dsScreen">📲</div>
+          <div class="dsLabel">iPad · Wall mount</div>
+        </div>
+        <div class="dsDevice dsPhone">
+          <div class="dsScreen">📱</div>
+          <div class="dsLabel">iPhone · On the go</div>
+        </div>
+        <div class="dsDevice dsLaptop">
+          <div class="dsScreen">💻</div>
+          <div class="dsLabel">Laptop · Full dashboard</div>
+        </div>
+      </div>
+
+      <p class="deviceNote">
+        <strong>Pro tip:</strong> Grab a $15 iPad wall mount, install the app, and enable Guided Access.
+        You now have a dedicated family command center for 1/10th the cost of a Skylight.
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══════════════ TESTIMONIALS ═══════════════ -->
+  <section class="testimonials reveal">
+    <div class="container">
+      <div class="sectionEyebrow">Real Families</div>
+      <h2 class="sectionTitle">Built by parents, for parents.</h2>
+      <p class="sectionSub">We built this for our own family first. Now we're sharing it.</p>
+
+      <div class="testGrid">
+        <div class="testCard">
+          <div class="testStars">★★★★★</div>
+          <div class="testQuote">"We almost bought a Skylight. Then we found this. Our kids are actually excited about chores for the first time ever."</div>
+          <div class="testAuthor">Sarah M.</div>
+          <div class="testRole">Mom of 3 · Denver, CO</div>
+        </div>
+        <div class="testCard">
+          <div class="testStars">★★★★★</div>
+          <div class="testQuote">"The gamification is genius. My 6-year-old runs to check his level every morning. The streaks keep him motivated all week."</div>
+          <div class="testAuthor">James R.</div>
+          <div class="testRole">Dad of 2 · Austin, TX</div>
+        </div>
+        <div class="testCard">
+          <div class="testStars">★★★★★</div>
+          <div class="testQuote">"We put it on an old iPad in the kitchen. It looks amazing and the kids can use it themselves. Better than any $170 device."</div>
+          <div class="testAuthor">Michelle K.</div>
+          <div class="testRole">Mom of 4 · Portland, OR</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ PRICING ═══════════════ -->
+  <section class="pricing reveal" id="pricing">
+    <div class="container">
+      <div class="sectionEyebrow">Pricing</div>
+      <h2 class="sectionTitle">Simple, fair pricing.</h2>
+      <p class="sectionSub">Start free. Upgrade when you're ready. No hardware. No tricks.</p>
+
+      <div class="pricingGrid">
+        <div class="priceCard">
+          <div class="priceTier">Free Forever</div>
+          <div class="priceAmount">$0</div>
+          <div class="pricePeriod">No credit card required</div>
+          <ul class="priceFeatureList">
+            <li>Unlimited kids & chores</li>
+            <li>Points & level system</li>
+            <li>Calendar month & week views</li>
+            <li>Parent PIN lock</li>
+            <li>Kid-friendly animated UI</li>
+            <li>PWA installable</li>
+            <li>Custom avatars & colors</li>
+          </ul>
+          <a href="/index.html" class="priceBtn priceBtnFree">Get Started Free</a>
+        </div>
+        <div class="priceCard featured">
+          <div class="priceTier">Family Pro</div>
+          <div class="priceAmount">$6<span style="font-size:1.2rem;color:var(--muted)">/mo</span></div>
+          <div class="pricePeriod">Cancel anytime</div>
+          <ul class="priceFeatureList">
+            <li>Everything in Free</li>
+            <li>Streak tracking & records</li>
+            <li>Allowance per kid</li>
+            <li>Full activity history</li>
+            <li>Custom rewards & treats</li>
+            <li>Priority support</li>
+            <li>Early access to new features</li>
+          </ul>
+          <a href="/index.html" class="priceBtn priceBtnPro">Start Pro — 7 day free trial</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ FINAL CTA ═══════════════ -->
+  <section class="finalCTA reveal">
+    <div class="container">
+      <div class="sectionEyebrow">Ready?</div>
+      <h2 class="sectionTitle">Stop overpaying.<br>Start <span style="background:linear-gradient(135deg,var(--blue),var(--purple),var(--green));-webkit-background-clip:text;background-clip:text;color:transparent;background-size:200% 200%;animation:gradShift 4s ease infinite">motivating</span>.</h2>
+      <p class="sectionSub">Set it up in 60 seconds. Works on the device in your hand right now.</p>
+      <div class="heroCTAs">
+        <a href="/index.html" class="ctaBtn ctaPrimary">🚀 Launch Free Dashboard</a>
+        <a href="#pricing" class="ctaBtn ctaSecondary">View Pricing</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ FOOTER ═══════════════ -->
+  <footer class="footer">
+    <div class="container">
+      <p>Family Chores & More · Built with ❤️ by <a href="https://devcabin.tech" target="_blank">DevCabin</a> · © 2025</p>
+    </div>
+  </footer>
+
+  <!-- Scroll reveal script -->
+  <script>
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    reveals.forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
