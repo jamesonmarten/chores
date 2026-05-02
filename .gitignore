@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 .env
 .vercel
+
+# Server-side signup/referral PII (file-based store)
+server/data/
