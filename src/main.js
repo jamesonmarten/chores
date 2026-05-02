@@ -26,6 +26,8 @@ import {
 import {
   ensureAccess, renderTrialBanner, showReferralModal, showPaywallModal,
 } from './ui/signup.js';
+import { showCalendarSyncModal } from './ui/calendar-sync.js';
+import { schedulePush as schedulePushCal } from './utils/calendar-push.js';
 
 // ── State ────────────────────────────────────────────────────────
 captureReferralFromUrl();
@@ -204,6 +206,9 @@ function renderParent() {
   const bRf = document.getElementById('bannerReferOpen');
   if (bUp) bUp.onclick = handleUpgrade;
   if (bRf) bRf.onclick = showReferralModal;
+
+  // Push latest events to subscribable calendar feed (debounced)
+  schedulePushCal(state);
 }
 
 // Parent header buttons
@@ -214,6 +219,7 @@ document.getElementById('btnSettings').onclick = () => {
   showSettingsModal(getPin(), newPin => { setPin(newPin); showModal('PIN Updated', 'Your parent PIN has been changed.', false, '🔒'); });
 };
 document.getElementById('btnCalendar').onclick = enterCalendarMode;
+document.getElementById('btnCalSync').onclick  = () => showCalendarSyncModal(state);
 document.getElementById('btnSwitchToKid').onclick = () => {
   if (state.kids.length === 1) {
     enterKidMode(state.kids[0].id);
@@ -261,6 +267,7 @@ function getWeekStart() {
 document.getElementById('btnCalBack').onclick   = () => { showScreen('parentMode'); renderParent(); };
 document.getElementById('btnCalMonth').onclick  = () => { calView = 'month'; renderCalendar(); };
 document.getElementById('btnCalWeek').onclick   = () => { calView = 'week';  renderCalendar(); };
+document.getElementById('btnCalSync2').onclick  = () => showCalendarSyncModal(state);
 
 // ── KID SELECTOR ─────────────────────────────────────────────────
 function showKidSelector() {

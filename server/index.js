@@ -185,6 +185,70 @@ app.get('/referral/:code', async (req, res) => {
   res.json({ count: list.length, emails: list });
 });
 
+// ─── Calendar feed (.ics) ────────────────────────────────────────────────────
+const CAL_FILE = path.join(DATA_DIR, 'calendars.json');
+
+function pad(n) { return String(n).padStart(2, '0'); }
+function toDateStamp(date) {
+  const d = new Date(date);
+  return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}`;
+}
+function toUtcStamp(date) {
+  const d = new Date(date);
+  return `${d.getUTCFullYear()}${pad(d.getUTCMonth()+1)}${pad(d.getUTCDate())}` +
+         `T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
+}
+function escapeICS(t='') {
+  return String(t).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n');
+}
+
+/** POST /calendar/:id — client uploads its events array (re-called on every change) */
+app.post('/calendar/:id', async (req, res) => {
+  const { id } = req.params;
+  const events = Array.isArray(req.body?.events) ? req.body.events : [];
+  const all = await readJson(CAL_FILE, {});
+  all[id] = { events, updatedAt: Date.now() };
+  await writeJson(CAL_FILE, all);
+  res.json({ ok: true, count: events.length });
+});
+
+/** GET /calendar/:id.ics — serve subscribable iCal feed */
+app.get('/calendar/:id.ics', async (req, res) => {
+  const { id } = req.params;
+  const all = await readJson(CAL_FILE, {});
+  const events = all[id]?.events || [];
+  const now = toUtcStamp(new Date());
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Family Chores & More//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'X-WR-CALNAME:Family Chores',
+    'X-PUBLISHED-TTL:PT1H',
+  ];
+  for (const ev of events) {
+    if (!ev?.date || !ev?.uid || !ev?.title) continue;
+    const stamp = toDateStamp(ev.date);
+    const next  = new Date(ev.date); next.setDate(next.getDate()+1);
+    lines.push(
+      'BEGIN:VEVENT',
+      `UID:${ev.uid}@familychores.app`,
+      `DTSTAMP:${now}`,
+      `DTSTART;VALUE=DATE:${stamp}`,
+      `DTEND;VALUE=DATE:${toDateStamp(next)}`,
+      `SUMMARY:${escapeICS(ev.title)}`,
+      ev.description ? `DESCRIPTION:${escapeICS(ev.description)}` : '',
+      ev.kidName     ? `CATEGORIES:${escapeICS(ev.kidName)}`     : '',
+      'END:VEVENT'
+    );
+  }
+  lines.push('END:VCALENDAR');
+  res.set('Content-Type', 'text/calendar; charset=utf-8');
+  res.set('Cache-Control', 'public, max-age=300');
+  res.send(lines.filter(Boolean).join('\r\n'));
+});
+
 const PORT = process.env.PORT || 4242;
 resolvePriceId().then(() => {
   app.listen(PORT, () => console.log(`🚀 Stripe server listening on http://localhost:${PORT}`));
