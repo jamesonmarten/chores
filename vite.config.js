@@ -10,8 +10,9 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        main: resolve(__dirname, 'index.html'),
-        demo: resolve(__dirname, 'demo.html'),
+        main:    resolve(__dirname, 'index.html'),
+        landing: resolve(__dirname, 'landing.html'),
+        demo:    resolve(__dirname, 'demo.html'),
       },
     },
   },
@@ -21,6 +22,8 @@ export default defineConfig({
       '/create-checkout-session': 'http://localhost:4242',
       '/webhook':                 'http://localhost:4242',
       '/pro-status':              'http://localhost:4242',
+      '/signup':                  'http://localhost:4242',
+      '/referral':                'http://localhost:4242',
     },
   },
 });

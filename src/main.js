@@ -20,8 +20,15 @@ import {
 import { registerPwaShell } from './pwa/register.js';
 import { registerDeepLinkHandler } from './pwa/deeplink.js';
 import { startCheckout, getCheckoutResult } from './stripe/checkout.js';
+import {
+  captureReferralFromUrl, loadAccount, hasProAccess, markPaid,
+} from './state/account.js';
+import {
+  ensureAccess, renderTrialBanner, showReferralModal, showPaywallModal,
+} from './ui/signup.js';
 
 // ── State ────────────────────────────────────────────────────────
+captureReferralFromUrl();
 const state = load();
 
 // ── Screen helpers ───────────────────────────────────────────────
@@ -104,8 +111,15 @@ document.getElementById('pinBackBtn').onclick = goHome;
 
 // ── PARENT MODE ──────────────────────────────────────────────────
 function enterParentMode() {
-  showScreen('parentMode');
-  renderParent();
+  // Gate behind signup + trial/paywall
+  const allowed = ensureAccess({
+    onAllowed: () => {
+      showScreen('parentMode');
+      renderParent();
+    },
+    onPaywall: () => handleUpgrade(),
+  });
+  if (!allowed) return;
 }
 
 function renderParent() {
@@ -182,7 +196,14 @@ function renderParent() {
 
   // Pro badge
   const proBadge = document.getElementById('proBadge');
-  if (proBadge) proBadge.hidden = !isPro(state);
+  if (proBadge) proBadge.hidden = !(isPro(state) || (loadAccount()?.paid));
+
+  // Trial banner + referral CTA wiring
+  renderTrialBanner();
+  const bUp = document.getElementById('bannerUpgrade');
+  const bRf = document.getElementById('bannerReferOpen');
+  if (bUp) bUp.onclick = handleUpgrade;
+  if (bRf) bRf.onclick = showReferralModal;
 }
 
 // Parent header buttons
@@ -288,6 +309,7 @@ async function handleUpgrade() {
 function applyCheckoutResult(result) {
   if (result === 'success') {
     activatePro(state);
+    markPaid();
     renderParent();
     showModal('Welcome to Family Pro! 🚀', 'Streaks, allowance tracking, and parent controls are now unlocked.', false, '🌟');
   } else if (result === 'cancel') {

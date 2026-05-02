@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+  <meta name="theme-color" content="#020810">
+  <title>Family Chores & More — Chores kids actually love</title>
+  <meta name="description" content="The simple, gamified chore tracker for families. Free 7-day trial, then $6/month. Works on every device.">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+    :root{
+      --bg:#020810; --card:#0c1424; --ink:#eef4ff; --muted:#7eb0d4; --muted2:#a8c8e8;
+      --line:rgba(100,170,255,.12);
+      --blue:#38bdf8; --blue2:#7dd3fc; --purple:#a78bfa; --green:#4ade80; --orange:#f59e0b; --pink:#f472b6;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5;overflow-x:hidden}
+    body::before{content:'';position:fixed;inset:0;background:
+      radial-gradient(ellipse 60% 50% at 20% 10%,rgba(56,189,248,.12),transparent 70%),
+      radial-gradient(ellipse 60% 50% at 80% 30%,rgba(167,139,250,.10),transparent 70%),
+      radial-gradient(ellipse 80% 60% at 50% 100%,rgba(34,197,94,.07),transparent 60%);
+      pointer-events:none;z-index:0}
+    section,header,footer{position:relative;z-index:1}
+    a{color:var(--blue);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .wrap{max-width:1100px;margin:0 auto;padding:0 24px}
+
+    /* NAV */
+    nav.top{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;max-width:1100px;margin:0 auto}
+    .logo{font-weight:900;font-size:1.05rem;letter-spacing:-.01em}
+    .logo span{color:var(--blue2)}
+    .navLinks{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .navLink{font-size:.9rem;font-weight:700;color:var(--muted2);padding:8px 14px;border-radius:10px}
+    .navLink:hover{background:rgba(255,255,255,.04);text-decoration:none;color:var(--ink)}
+    .navCta{background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff!important;padding:10px 18px;border-radius:12px;font-weight:900;font-size:.9rem}
+    .navCta:hover{filter:brightness(1.1);text-decoration:none}
+
+    /* HERO */
+    .hero{padding:60px 24px 80px;text-align:center}
+    .heroBadge{display:inline-flex;align-items:center;gap:8px;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.3);border-radius:999px;padding:7px 16px;font-size:.78rem;font-weight:800;color:var(--blue2);margin-bottom:24px}
+    .heroBadge .dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+    h1.heroTitle{font-size:clamp(2.6rem,7vw,5rem);font-weight:900;line-height:.95;letter-spacing:-.02em;margin-bottom:24px;max-width:840px;margin-left:auto;margin-right:auto}
+    .grad{background:linear-gradient(135deg,var(--blue),var(--purple),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent;background-size:200% 200%;animation:gradShift 6s ease infinite}
+    .heroSub{font-size:clamp(1.05rem,2.2vw,1.3rem);color:var(--muted2);font-weight:600;max-width:640px;margin:0 auto 36px;line-height:1.55}
+
+    /* HUGE DEMO BUTTON */
+    .ctaStack{display:flex;flex-direction:column;align-items:center;gap:14px;margin-bottom:14px}
+    .demoCTA{
+      display:inline-flex;align-items:center;gap:14px;
+      background:linear-gradient(135deg,var(--blue) 0%,var(--purple) 50%,var(--pink) 100%);
+      background-size:200% 200%;animation:gradShift 5s ease infinite;
+      color:#fff;font-weight:900;font-size:1.5rem;letter-spacing:-.01em;
+      padding:24px 52px;border-radius:22px;border:none;cursor:pointer;
+      box-shadow:0 24px 60px rgba(56,189,248,.35),0 0 0 4px rgba(56,189,248,.08);
+      transition:transform .2s,box-shadow .2s,filter .2s;
+      text-decoration:none;
+    }
+    .demoCTA:hover{transform:translateY(-4px) scale(1.02);text-decoration:none;filter:brightness(1.08);box-shadow:0 30px 80px rgba(56,189,248,.5),0 0 0 6px rgba(56,189,248,.15)}
+    .demoCTA:active{transform:scale(.98)}
+    .demoCTA .arrow{font-size:1.6rem;animation:bounceX 1.6s ease-in-out infinite}
+    @keyframes bounceX{0%,100%{transform:translateX(0)}50%{transform:translateX(6px)}}
+
+    .ctaRow{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+    .ctaBtn{padding:12px 22px;border-radius:12px;font-weight:800;font-size:.95rem;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);text-decoration:none;cursor:pointer}
+    .ctaBtn:hover{background:rgba(255,255,255,.08);text-decoration:none}
+    .heroNote{font-size:.85rem;color:var(--muted);font-weight:600;margin-top:20px}
+
+    /* SCREENSHOT */
+    .heroShot{margin:50px auto 0;max-width:900px;border-radius:24px;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,.6);border:1px solid var(--line);background:#0a1525}
+    .shotInner{padding:24px;display:grid;grid-template-columns:1.4fr 1fr;gap:14px;background:linear-gradient(160deg,#071528,#0a1a30)}
+    .shotCol{display:flex;flex-direction:column;gap:10px}
+    .shotKidRow{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+    .shotEm{font-size:1.6rem}
+    .shotName{font-size:.92rem;font-weight:900;color:var(--ink)}
+    .shotBar{height:6px;background:rgba(255,255,255,.08);border-radius:99px;margin-top:6px;overflow:hidden}
+    .shotBarFill{height:100%;border-radius:99px}
+    .shotPct{font-size:.85rem;font-weight:900;margin-left:auto}
+    .shotChores{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .shotChore{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:12px;padding:12px 8px;text-align:center;display:flex;flex-direction:column;gap:4px;align-items:center}
+    .shotChore.done{background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.35)}
+    .shotChoreEm{font-size:1.4rem}
+    .shotChoreT{font-size:.72rem;font-weight:800;color:var(--muted2)}
+    .shotChoreP{font-size:.68rem;font-weight:900;color:var(--green)}
+
+    /* HOW IT WORKS */
+    .howWorks{padding:80px 0}
+    .secTitle{text-align:center;font-size:clamp(2rem,4vw,2.8rem);font-weight:900;margin-bottom:14px;line-height:1.15}
+    .secSub{text-align:center;color:var(--muted2);font-size:1rem;font-weight:600;max-width:600px;margin:0 auto 44px}
+    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    .step{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:30px 24px;text-align:center;position:relative}
+    .stepNum{position:absolute;top:16px;right:18px;font-size:.78rem;font-weight:900;color:var(--muted);background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:8px;padding:3px 8px}
+    .stepEm{font-size:2.6rem;margin-bottom:14px}
+    .stepT{font-size:1.15rem;font-weight:900;margin-bottom:8px}
+    .stepD{font-size:.92rem;color:var(--muted2);font-weight:600;line-height:1.5}
+
+    /* FEATURE STRIP */
+    .feats{padding:60px 0}
+    .featGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+    .featCard{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px}
+    .featEm{font-size:1.8rem;margin-bottom:10px;display:block}
+    .featT{font-size:1rem;font-weight:900;margin-bottom:6px}
+    .featD{font-size:.85rem;color:var(--muted2);font-weight:600;line-height:1.45}
+
+    /* SOCIAL / TRUST */
+    .trust{padding:60px 0;text-align:center}
+    .trustNum{font-size:3rem;font-weight:900;background:linear-gradient(135deg,var(--green),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:8px}
+    .trustLbl{font-size:.92rem;color:var(--muted2);font-weight:700}
+    .trustGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:30px}
+    .trustItem{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:18px;padding:24px 18px}
+
+    /* PRICING */
+    .pricing{padding:80px 0}
+    .priceGrid{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:760px;margin:0 auto}
+    .price{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:30px;text-align:center}
+    .price.featured{background:linear-gradient(160deg,rgba(56,189,248,.10),rgba(167,139,250,.08));border-color:rgba(56,189,248,.4);position:relative}
+    .price.featured::before{content:'BEST VALUE';position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;font-size:.7rem;font-weight:900;letter-spacing:.08em;padding:5px 14px;border-radius:999px}
+    .priceTier{font-size:.78rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+    .priceAmt{font-size:3rem;font-weight:900;line-height:1}
+    .pricePer{font-size:.88rem;color:var(--muted);font-weight:700;margin-bottom:20px}
+    .priceList{list-style:none;text-align:left;display:flex;flex-direction:column;gap:9px;margin-bottom:22px;font-size:.88rem;color:var(--muted2);font-weight:700}
+    .priceList li::before{content:'✓ ';color:var(--green);font-weight:900}
+    .priceBtn{display:block;padding:13px;border-radius:12px;font-weight:900;font-size:.95rem;text-align:center;text-decoration:none;color:#fff;background:rgba(255,255,255,.08);border:1px solid var(--line)}
+    .priceBtn.pro{background:linear-gradient(135deg,var(--blue),var(--purple));box-shadow:0 12px 30px rgba(56,189,248,.25)}
+    .priceBtn:hover{filter:brightness(1.1);text-decoration:none}
+
+    /* REFERRAL CALLOUT */
+    .refCallout{margin-top:40px;background:linear-gradient(135deg,rgba(34,197,94,.1),rgba(56,189,248,.08));border:1px solid rgba(34,197,94,.25);border-radius:20px;padding:30px;text-align:center}
+    .refCallout h3{font-size:1.4rem;font-weight:900;margin-bottom:8px}
+    .refCallout p{font-size:.95rem;color:var(--muted2);font-weight:600}
+
+    /* FINAL CTA */
+    .finalCta{padding:100px 0;text-align:center}
+
+    /* FOOTER */
+    footer{padding:40px 0;text-align:center;border-top:1px solid var(--line);margin-top:40px}
+    footer p{font-size:.82rem;color:var(--muted);font-weight:700}
+
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+    @keyframes gradShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+
+    @media (max-width:900px){
+      .steps{grid-template-columns:1fr}
+      .featGrid{grid-template-columns:1fr 1fr}
+      .trustGrid{grid-template-columns:1fr 1fr}
+      .priceGrid{grid-template-columns:1fr;max-width:420px}
+      .shotInner{grid-template-columns:1fr}
+      .demoCTA{font-size:1.2rem;padding:20px 36px}
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="top">
+    <div class="logo">✨ Family <span>Chores</span></div>
+    <div class="navLinks">
+      <a class="navLink" href="#how">How it works</a>
+      <a class="navLink" href="#pricing">Pricing</a>
+      <a class="navLink" href="/demo">Demo</a>
+      <a class="navCta" href="/app">Get Started</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap">
+      <div class="heroBadge"><span class="dot"></span> Free 7-day trial · No credit card</div>
+      <h1 class="heroTitle">Chores your kids will <span class="grad">actually love</span>.</h1>
+      <p class="heroSub">A beautiful, gamified family chore tracker. Set up in 60 seconds. Works on every phone, tablet, and laptop you already own.</p>
+
+      <div class="ctaStack">
+        <a href="/demo" class="demoCTA">▶ Try the Live Demo <span class="arrow">→</span></a>
+        <div class="ctaRow">
+          <a href="/app" class="ctaBtn">🚀 Start Free Trial</a>
+          <a href="#how" class="ctaBtn">See how it works ↓</a>
+        </div>
+        <div class="heroNote">Tap the demo to play with a live mini-version — no signup needed.</div>
+      </div>
+
+      <!-- Mini screenshot -->
+      <div class="heroShot">
+        <div class="shotInner">
+          <div class="shotCol">
+            <div class="shotKidRow"><span class="shotEm">🦁</span><div style="flex:1"><div class="shotName">Lincoln · 4 yrs</div><div class="shotBar"><div class="shotBarFill" style="width:75%;background:#4ade80"></div></div></div><span class="shotPct" style="color:#4ade80">75%</span></div>
+            <div class="shotKidRow"><span class="shotEm">⭐</span><div style="flex:1"><div class="shotName">Sienna · 17 yrs</div><div class="shotBar"><div class="shotBarFill" style="width:100%;background:#a78bfa"></div></div></div><span class="shotPct" style="color:#a78bfa">100%</span></div>
+            <div class="shotKidRow"><span class="shotEm">👶</span><div style="flex:1"><div class="shotName">Josie · 4 mo</div><div class="shotBar"><div class="shotBarFill" style="width:40%;background:#f472b6"></div></div></div><span class="shotPct" style="color:#f472b6">40%</span></div>
+          </div>
+          <div class="shotCol">
+            <div class="shotChores">
+              <div class="shotChore done"><span class="shotChoreEm">🧩</span><span class="shotChoreT">Toys away</span><span class="shotChoreP">+20 ✓</span></div>
+              <div class="shotChore done"><span class="shotChoreEm">👕</span><span class="shotChoreT">Clothes</span><span class="shotChoreP">+15 ✓</span></div>
+              <div class="shotChore"><span class="shotChoreEm">🍽️</span><span class="shotChoreT">Dishes</span><span class="shotChoreP">+15</span></div>
+              <div class="shotChore"><span class="shotChoreEm">🏠</span><span class="shotChoreT">Clean room</span><span class="shotChoreP">+30</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="howWorks" id="how">
+    <div class="wrap">
+      <h2 class="secTitle">Three steps. That's it.</h2>
+      <p class="secSub">No setup wizards, no hardware to buy, no manuals to read.</p>
+      <div class="steps">
+        <div class="step"><span class="stepNum">1</span><div class="stepEm">👨‍👩‍👧</div><div class="stepT">Add your kids</div><div class="stepD">Each one gets their own avatar, color, and tailored chore list. Toddlers to teens — fully customizable.</div></div>
+        <div class="step"><span class="stepNum">2</span><div class="stepEm">🎯</div><div class="stepT">Set the chores</div><div class="stepD">Pick from suggestions or make your own. Set point values. Add allowance amounts. Done in a minute.</div></div>
+        <div class="step"><span class="stepNum">3</span><div class="stepEm">🎉</div><div class="stepT">Watch them love it</div><div class="stepD">Kids tap their chores, earn points, level up, unlock streaks, and discover hidden Easter eggs. Real motivation.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="feats">
+    <div class="wrap">
+      <h2 class="secTitle">Built for real families.</h2>
+      <p class="secSub">Everything you need. Nothing you don't.</p>
+      <div class="featGrid">
+        <div class="featCard"><span class="featEm">🎮</span><div class="featT">Gamified</div><div class="featD">Points, levels, streaks, Easter eggs. Chores feel like a game.</div></div>
+        <div class="featCard"><span class="featEm">📅</span><div class="featT">Calendar view</div><div class="featD">Month and week views with per-kid progress bars for every day.</div></div>
+        <div class="featCard"><span class="featEm">💰</span><div class="featT">Allowance tracking</div><div class="featD">Set rates per kid. Pay with one tap. Auto-history.</div></div>
+        <div class="featCard"><span class="featEm">🔒</span><div class="featT">Parent PIN</div><div class="featD">Kids can't tamper with settings. Change PIN any time.</div></div>
+        <div class="featCard"><span class="featEm">🔥</span><div class="featT">Streaks</div><div class="featD">Daily and best-streak tracking keeps kids motivated.</div></div>
+        <div class="featCard"><span class="featEm">📱</span><div class="featT">Any device</div><div class="featD">Web, iPhone, iPad, Android. Install as a home-screen app.</div></div>
+        <div class="featCard"><span class="featEm">🎨</span><div class="featT">Customizable</div><div class="featD">Avatars, colors, emojis, point values — make it yours.</div></div>
+        <div class="featCard"><span class="featEm">📊</span><div class="featT">History log</div><div class="featD">See exactly who did what, when, and how much they earned.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRUST -->
+  <section class="trust">
+    <div class="wrap">
+      <div class="trustGrid">
+        <div class="trustItem"><div class="trustNum">60s</div><div class="trustLbl">to set up</div></div>
+        <div class="trustItem"><div class="trustNum">$0</div><div class="trustLbl">hardware required</div></div>
+        <div class="trustItem"><div class="trustNum">7 days</div><div class="trustLbl">free trial</div></div>
+        <div class="trustItem"><div class="trustNum">$6/mo</div><div class="trustLbl">after — cancel anytime</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="pricing" id="pricing">
+    <div class="wrap">
+      <h2 class="secTitle">Simple, fair pricing.</h2>
+      <p class="secSub">Start free. Pay only if you love it.</p>
+      <div class="priceGrid">
+        <div class="price">
+          <div class="priceTier">Free Trial</div>
+          <div class="priceAmt">$0</div>
+          <div class="pricePer">7 days · no card</div>
+          <ul class="priceList">
+            <li>Full access for 7 days</li>
+            <li>Unlimited kids and chores</li>
+            <li>Calendar, streaks, allowance</li>
+            <li>Try every feature</li>
+          </ul>
+          <a href="/app" class="priceBtn">Start Free Trial</a>
+        </div>
+        <div class="price featured">
+          <div class="priceTier">Family Pro</div>
+          <div class="priceAmt">$6<span style="font-size:1.1rem;color:var(--muted)">/mo</span></div>
+          <div class="pricePer">Cancel anytime</div>
+          <ul class="priceList">
+            <li>Everything in trial</li>
+            <li>Allowance & history forever</li>
+            <li>Earn free months by referring</li>
+            <li>Priority support</li>
+            <li>Early access to new features</li>
+          </ul>
+          <a href="/app" class="priceBtn pro">Get Pro</a>
+        </div>
+      </div>
+
+      <div class="refCallout">
+        <h3>🎁 Refer a friend, get a free month</h3>
+        <p>Every family that signs up with your link earns you both a free month. No cap. Refer 12 → free year of Pro.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="finalCta">
+    <div class="wrap">
+      <h2 class="secTitle">Ready to make chores fun?</h2>
+      <p class="secSub">Try the live demo — no signup, no card, no friction.</p>
+      <div class="ctaStack">
+        <a href="/demo" class="demoCTA">▶ Open the Live Demo <span class="arrow">→</span></a>
+        <a href="/app" class="ctaBtn" style="margin-top:8px">Or skip — start your free trial →</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p>Family Chores & More · Built with ❤️ by <a href="https://devcabin.tech" target="_blank">DevCabin</a> · © 2026</p>
+    </div>
+  </footer>
+
+</body>
+</html>
