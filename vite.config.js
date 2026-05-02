@@ -13,6 +13,7 @@ export default defineConfig({
         main:    resolve(__dirname, 'index.html'),
         landing: resolve(__dirname, 'landing.html'),
         demo:    resolve(__dirname, 'demo.html'),
+        compare: resolve(__dirname, 'compare.html'),
       },
     },
   },

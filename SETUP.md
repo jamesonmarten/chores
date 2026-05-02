@@ -1,6 +1,6 @@
 # Setup checklist — Family Chores & More
 
-Everything left to wire up production. Estimated total time: **~15 minutes**.
+Everything left to wire up the production deployment, in order. Estimated total time: **15 minutes**.
 
 ---
 
@@ -32,7 +32,7 @@ Everything left to wire up production. Estimated total time: **~15 minutes**.
 ## 3. 🪝 Set up the Stripe webhook
 
 1. https://dashboard.stripe.com/webhooks → **Add endpoint**
-2. Endpoint URL: `https://your-api-host.com/webhook` (deployed in step 6)
+2. Endpoint URL: `https://api.your-host.com/webhook` (the server you'll deploy — see step 6)
 3. Listen for events:
    - `checkout.session.completed`
    - `customer.subscription.deleted`
@@ -45,19 +45,19 @@ Everything left to wire up production. Estimated total time: **~15 minutes**.
 
 ## 4. 🌐 DNS — point `chores.devcabin.tech` at Vercel
 
-At your domain registrar:
+At your domain registrar (whoever runs `devcabin.tech`):
 
-| Type  | Host    | Value          | TTL |
-|-------|---------|----------------|-----|
-| A     | chores  | `76.76.21.21`  | 300 |
+| Type  | Host    | Value          | TTL   |
+|-------|---------|----------------|-------|
+| A     | chores  | `76.76.21.21`  | 300   |
 
-Or (CNAME alternative):
+Or, if you prefer CNAME (some registrars require it for subdomains):
 
-| Type  | Host    | Value                   | TTL |
-|-------|---------|-------------------------|-----|
-| CNAME | chores  | `cname.vercel-dns.com`  | 300 |
+| Type  | Host    | Value                   | TTL   |
+|-------|---------|-------------------------|-------|
+| CNAME | chores  | `cname.vercel-dns.com`  | 300   |
 
-Verify after ~5 minutes:
+Wait ~5 minutes, then verify:
 ```bash
 dig +short chores.devcabin.tech
 ```
@@ -68,51 +68,57 @@ dig +short chores.devcabin.tech
 
 https://vercel.com/jameson-9426s-projects/family-chores-more/settings/environment-variables
 
-Add for **Production**:
+Add these for **Production** (and Preview if you want):
 
 | Name                          | Value                                |
 |-------------------------------|--------------------------------------|
-| `STRIPE_SECRET_KEY`           | `sk_live_...` (step 1)               |
-| `STRIPE_WEBHOOK_SECRET`       | `whsec_...` (step 3)                 |
-| `STRIPE_PRICE_ID`             | `price_...` (step 2)                 |
-| `VITE_STRIPE_PUBLISHABLE_KEY` | `pk_live_...` (step 1)               |
-| `VITE_API_URL`                | `https://your-api-host.com` (step 6) |
+| `STRIPE_SECRET_KEY`           | `sk_live_...` (from step 1)          |
+| `STRIPE_WEBHOOK_SECRET`       | `whsec_...` (from step 3)            |
+| `STRIPE_PRICE_ID`             | `price_...` (from step 2)            |
+| `VITE_STRIPE_PUBLISHABLE_KEY` | `pk_live_...` (from step 1)          |
+| `VITE_API_URL`                | `https://chores.devcabin.tech`       |
 | `CLIENT_URL`                  | `https://chores.devcabin.tech`       |
 
-Then redeploy:
+After saving, **redeploy** so the new env vars take effect:
 ```bash
 cd family-chores-more && npx vercel --prod
 ```
 
 ---
 
-## 6. 🖥️ Deploy the API server
+## 6. 🖥️  Deploy the API server
 
-The Express server at `server/index.js` handles `/create-checkout-session`, `/webhook`, `/signup`, `/referral`. Vercel does NOT run it — host it on Render, Railway, or Fly.io.
+The Express server (`server/index.js`) handles `/create-checkout-session`, `/webhook`, `/signup`, `/referral`. Vercel **does not** run it — you need a Node host. Recommended:
 
-### Recommended: Render.com (free tier)
-
+### Option A — Render.com (free tier works)
 1. https://render.com/dashboard → **New → Web Service**
 2. Connect the `jamesonmarten/chores` GitHub repo
 3. Settings:
-   - **Root directory:** `family-chores-more/server`
-   - **Build command:** `npm install`
-   - **Start command:** `node index.js`
-4. Add the same env vars from step 5 (server-side ones — `STRIPE_*`, `CLIENT_URL`)
+   - Root directory: `family-chores-more/server`
+   - Build command: `npm install`
+   - Start command: `node index.js`
+4. Add the same env vars from step 5 (server-side ones only)
 5. Copy the resulting URL (e.g. `https://family-chores-api.onrender.com`)
-6. Update Vercel's `VITE_API_URL` to that URL → redeploy
+6. Update Vercel `VITE_API_URL` to that URL → redeploy
+
+### Option B — Fly.io / Railway
+Same idea, deploy `server/` as a Node app, point `VITE_API_URL` at it.
 
 ---
 
-## 7. 🤖 GitHub Actions secrets (for auto-deploy on push)
+## 7. 🤖 GitHub Actions secrets
+
+For auto-deploy on every push to `main`:
 
 https://github.com/jamesonmarten/chores/settings/secrets/actions → **New repository secret**
 
-| Name                          | Value                                 | Where |
+| Name                          | Value                                 | Where to find it |
 |-------------------------------|---------------------------------------|---|
 | `VERCEL_TOKEN`                | A Vercel access token                 | https://vercel.com/account/tokens |
 | `VITE_STRIPE_PUBLISHABLE_KEY` | `pk_live_...`                         | Stripe (step 1) |
 | `VITE_API_URL`                | `https://your-api-host.com`           | Step 6 |
+
+The workflow at `.github/workflows/deploy.yml` will then build + deploy on every push.
 
 ---
 
@@ -126,21 +132,20 @@ open ios/App/App.xcworkspace
 ```
 
 In Xcode:
-1. Select **App** target → Signing & Capabilities → choose your team
+1. Select the **App** target → Signing & Capabilities → choose your team
 2. Bump build/version number
 3. **Product → Archive** → Distribute App → App Store Connect
 
-The `familychores://` URL scheme is already wired in `Info.plist` for Stripe deep-link return.
+The custom URL scheme `familychores://` is already wired in `Info.plist` for Stripe deep-link return.
 
 ---
 
-## ✅ Verify
+## ✅ Verify the live site
 
-After steps 1–6 are done:
+After steps 1–6:
 
-- https://chores.devcabin.tech → clean landing with big DEMO button
+- https://chores.devcabin.tech → clean landing page with big DEMO button
 - https://chores.devcabin.tech/demo → interactive sandbox (tap chores, see confetti)
 - https://chores.devcabin.tech/app → real app, gated behind signup
-- Try a signup → check your hosted server's `data/signups.json` for captured fields
+- Try a signup → check `server/data/signups.json` (or your hosted server's data dir) for the captured fields
 - Click **Upgrade $6/mo** → real Stripe checkout opens with your live keys
-- Copy your referral link from the dashboard → open it in incognito → sign up → both accounts get `+1 bonus month`
