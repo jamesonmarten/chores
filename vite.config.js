@@ -18,13 +18,10 @@ export default defineConfig({
     },
   },
   server: {
-    // Proxy API calls to the local Express server during development
+    // Proxy /api/* to `vercel dev` (running on :3000) so client + functions work locally.
+    // Run `npm run dev:api` in one terminal and `npm run dev` in another.
     proxy: {
-      '/create-checkout-session': 'http://localhost:4242',
-      '/webhook':                 'http://localhost:4242',
-      '/pro-status':              'http://localhost:4242',
-      '/signup':                  'http://localhost:4242',
-      '/referral':                'http://localhost:4242',
+      '/api': 'http://localhost:3000',
     },
   },
 });

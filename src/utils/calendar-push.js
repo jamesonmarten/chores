@@ -4,7 +4,7 @@
 import { eventsFromState } from './calendar-export.js';
 import { loadAccount } from '../state/account.js';
 
-const API = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+const API = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
 let _timer = null;
 let _lastHash = '';
 

@@ -15,10 +15,9 @@ jobs:
         env:
           VERCEL_TOKEN:                ${{ secrets.VERCEL_TOKEN }}
           VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
-          VITE_API_URL:                ${{ secrets.VITE_API_URL }}
         run: |
           missing=0
-          for v in VERCEL_TOKEN VITE_STRIPE_PUBLISHABLE_KEY VITE_API_URL; do
+          for v in VERCEL_TOKEN VITE_STRIPE_PUBLISHABLE_KEY; do
             if [ -z "${!v}" ]; then
               echo "::error::Missing required secret: $v"
               missing=1
@@ -39,7 +38,6 @@ jobs:
         run: npm run build
         env:
           VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
@@ -53,7 +51,6 @@ jobs:
       - name: Smoke test live site
         if: success()
         env:
-          FRONTEND: https://chores.devcabin.tech
-          API:      ${{ secrets.VITE_API_URL }}
+          BASE: https://chores.devcabin.tech
         run: node scripts/smoke-test.mjs
-        continue-on-error: true   # don't fail the deploy if API is still warming up
+        continue-on-error: true

@@ -4,7 +4,8 @@
 import { Browser } from '@capacitor/browser';
 import { loadStripe } from '@stripe/stripe-js';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:4242';
+// Same-origin /api by default (Vercel Functions). Override with VITE_API_URL for local dev / native shell.
+const API = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
 const PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
 
 /**

@@ -6,7 +6,7 @@ const REFERRAL_KEY = 'familyChoresReferralCode';
 const TRIAL_DAYS   = 7;
 const MS_DAY       = 24 * 60 * 60 * 1000;
 
-const API = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+const API = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
 
 // ── Referral code (read once from URL) ────────────────────────────
 export function captureReferralFromUrl() {

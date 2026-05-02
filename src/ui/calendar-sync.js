@@ -7,7 +7,10 @@ import {
   googleAddUrl, webcalSubscribeUrl,
 } from '../utils/calendar-export.js';
 
-const API = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+// Same-origin /api on web; absolute URL when running in Capacitor native shell (where window.origin is capacitor://).
+const RAW_API = import.meta.env.VITE_API_URL
+  || (window.Capacitor?.isNativePlatform?.() ? 'https://chores.devcabin.tech/api' : '/api');
+const API = RAW_API.replace(/\/$/, '');
 
 const modal    = () => document.getElementById('parentModal');
 const modalBox = () => document.getElementById('parentModalBox');
@@ -28,7 +31,10 @@ let _includeUpcoming  = true;
 
 export function showCalendarSyncModal(state) {
   const acct = loadAccount();
-  const subUrl = acct && API ? `${API}/calendar/${acct.id}.ics` : null;
+  // Subscribe URL must be absolute (webcal:// can't resolve a relative path).
+  // If API is same-origin "/api", convert it to a fully-qualified URL.
+  const absApi = API.startsWith('http') ? API : `${window.location.origin}${API}`;
+  const subUrl = acct ? `${absApi}/calendar/${acct.id}.ics` : null;
 
   open(`
     <div class="syncBox">
