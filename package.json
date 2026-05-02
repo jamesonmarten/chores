@@ -7,10 +7,10 @@
     "dev": "vite",
     "dev:server": "node server/index.js",
     "build": "vite build",
+    "build:ios": "CAPACITOR_BUILD=1 vite build",
     "preview": "vite preview",
-    "cap:init": "cap init 'Family Chores' com.devcabin.familychores --web-dir dist",
     "cap:add:ios": "cap add ios",
-    "cap:sync": "vite build && cap sync ios",
+    "cap:sync": "npm run build:ios && cap sync ios",
     "cap:open": "cap open ios",
     "ios": "npm run cap:sync && npm run cap:open"
   },
