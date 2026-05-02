@@ -14,57 +14,116 @@
   <title>Family Chores &amp; More</title>
 </head>
 <body>
+
+  <!-- INSTALL BANNER -->
   <div id="installBanner" class="installBanner" hidden>
     <strong>Install this app</strong>
-    <span>On iPhone or iPad: tap Share, then Add to Home Screen.</span>
+    <span>On iPhone: tap Share then Add to Home Screen.</span>
     <button id="dismissInstall" type="button">Got it</button>
   </div>
-  <main class="app">
-    <section class="top">
-      <div>
-        <div class="eyebrow"><span class="spark">✨</span> Family Chores &amp; More</div>
-        <h1 class="heroTitle">Turn chores into <span>daily wins.</span></h1>
-        <div class="sub">A playful family dashboard where kids tap tasks, earn 100 daily points, unlock treats, and discover hidden Easter egg surprises.</div>
+
+  <!-- MODE SELECTOR -->
+  <div id="modeSelect" class="modeSelect" hidden>
+    <div class="modeSelectInner">
+      <div class="modeAppName">Family Chores More</div>
+      <h1 class="modeTitleBig">Who's here?</h1>
+      <div class="modeCards">
+        <button class="modeCard modeParent" id="btnParentMode">
+          <span class="modeEmoji">&#x1F468;&#x200D;&#x1F469;&#x200D;&#x1F467;&#x200D;&#x1F466;</span>
+          <span class="modeLabel">Parent</span>
+          <span class="modeDesc">Manage chores and rewards</span>
+        </button>
+        <button class="modeCard modeKid" id="btnKidMode">
+          <span class="modeEmoji">&#x2B50;</span>
+          <span class="modeLabel">Kid</span>
+          <span class="modeDesc">Do chores and earn points!</span>
+        </button>
       </div>
-      <aside class="pricing">
-        <small>Family Pro</small><b>$6/mo</b>
-        <small>Custom rewards, printable charts, streaks, allowance mode, and parent controls.</small>
-        <button id="topUpgrade" class="proBtn">Unlock Pro</button>
-      </aside>
-    </section>
-    <section class="stats">
-      <div class="stat"><strong id="statPoints">0</strong><span>points earned today</span></div>
-      <div class="stat"><strong id="statTreats">0</strong><span>treats unlocked</span></div>
-      <div class="stat"><strong id="statEggs">0</strong><span>Easter eggs found</span></div>
-      <div class="stat"><strong>100</strong><span>daily goal per kid</span></div>
-    </section>
-    <section id="familyGrid" class="familyGrid"></section>
-    <section class="calendar">
-      <div class="calendarHeader">
-        <div>
-          <h2>This Month</h2>
-          <div class="sub">Calendar shows daily progress, not just activity dots.</div>
-        </div>
-        <div class="calendarLegend">
-          <span class="legendItem">Green = 100/100</span>
-          <span class="legendItem">Gold = in progress</span>
-          <span class="legendItem">Dark = not started</span>
-        </div>
-      </div>
-      <div id="todayFocus" class="todayFocus"></div>
-      <div id="calendar" class="monthGrid"></div>
-    </section>
-  </main>
-  <div id="modal" class="modal">
-    <div class="modalBox">
-      <div id="eggIcon"></div>
-      <h2 id="modalTitle">Great job!</h2>
-      <p id="modalText"></p>
-      <div id="modalPrice" class="price" style="display:none">$6/mo</div>
-      <button id="closeModal" class="btn">Close</button>
     </div>
   </div>
+
+  <!-- PARENT PIN SCREEN -->
+  <div id="pinScreen" class="pinScreen" hidden>
+    <div class="pinBox">
+      <div class="pinEmoji">&#x1F512;</div>
+      <h2 class="pinTitle">Parent Access</h2>
+      <p class="pinSub">Enter your 4-digit PIN</p>
+      <div class="pinDots" id="pinDots">
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <div class="pinPad" id="pinPad"></div>
+      <button class="pinBack" id="pinBackBtn">Back</button>
+    </div>
+  </div>
+
+  <!-- PARENT DASHBOARD -->
+  <div id="parentMode" class="appShell" hidden>
+    <header class="parentHeader">
+      <div class="headerBrand">
+        <span class="headerEmoji">&#x2728;</span>
+        <span class="headerTitle">Family Chores</span>
+        <span class="headerBadge" id="proBadge" hidden>PRO</span>
+      </div>
+      <div class="headerActions">
+        <button class="iconBtn" id="btnAddKid">+ Kid</button>
+        <button class="iconBtn" id="btnSettings">Settings</button>
+        <button class="iconBtn proUpgradeBtn" id="topUpgrade">Upgrade Pro</button>
+        <button class="iconBtn" id="btnSwitchToKid">Kid View</button>
+      </div>
+    </header>
+    <main class="parentMain">
+      <section class="parentStats" id="parentStats"></section>
+      <section class="parentKidsGrid" id="parentKidsGrid"></section>
+      <section class="historySection">
+        <div class="sectionHeader">
+          <h2>Recent Activity</h2>
+          <button class="linkBtn" id="btnClearHistory">Clear all</button>
+        </div>
+        <div class="historyList" id="historyList"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- KID SELECTOR -->
+  <div id="kidSelectScreen" class="kidSelectScreen" hidden>
+    <div class="kidSelectInner">
+      <button class="backFloatBtn" id="btnKidSelectBack">Back</button>
+      <h2 class="kidSelectTitle">Who are you?</h2>
+      <div class="kidSelectGrid" id="kidSelectGrid"></div>
+    </div>
+  </div>
+
+  <!-- KID DASHBOARD -->
+  <div id="kidMode" class="kidModeShell" hidden>
+    <header class="kidHeader" id="kidHeader">
+      <button class="kidBackBtn" id="btnKidBack">Switch</button>
+      <div class="kidHeaderInfo" id="kidHeaderInfo"></div>
+    </header>
+    <main class="kidMain" id="kidMain"></main>
+  </div>
+
+  <!-- SHARED MODAL -->
+  <div id="modal" class="modal" hidden>
+    <div class="modalBox">
+      <div id="eggIcon" class="eggIcon"></div>
+      <h2 id="modalTitle"></h2>
+      <p id="modalText"></p>
+      <div id="modalPrice" class="price" hidden>$6/mo</div>
+      <div class="modalActions">
+        <button id="modalConfirm" class="btn green" hidden></button>
+        <button id="closeModal" class="btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PARENT FORM MODAL -->
+  <div id="parentModal" class="modal" hidden>
+    <div class="modalBox wide" id="parentModalBox"></div>
+  </div>
+
+  <!-- CONFETTI -->
   <div id="confettiLayer" class="confetti"></div>
+
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>

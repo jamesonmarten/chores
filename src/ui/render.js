@@ -11,15 +11,20 @@ export function showModal(title, text, price = false, icon = '') {
   document.getElementById('eggIcon').innerHTML = icon ? `<div class="egg">${icon}</div>` : '';
   document.getElementById('modalTitle').textContent = title;
   document.getElementById('modalText').textContent = text;
-  document.getElementById('modalPrice').style.display = price ? 'block' : 'none';
-  document.getElementById('modal').classList.add('show');
+  const priceEl = document.getElementById('modalPrice');
+  if (priceEl) priceEl.hidden = !price;
+  const m = document.getElementById('modal');
+  m.hidden = false;
+  m.classList.add('show');
 }
 
 /**
  * Hides the modal.
  */
 export function hideModal() {
-  document.getElementById('modal').classList.remove('show');
+  const m = document.getElementById('modal');
+  m.classList.remove('show');
+  setTimeout(() => { m.hidden = true; }, 220);
 }
 
 /**

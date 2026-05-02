@@ -1,11 +1,13 @@
 // FILE: src/utils/helpers.js
 
 /**
- * Launches confetti animation into the given container element.
- * @param {HTMLElement} container
+ * Launches confetti animation. Uses #confettiLayer if no container passed.
+ * @param {HTMLElement} [container]
  */
 export function launchConfetti(container) {
-  container.innerHTML = '';
+  const el = container || document.getElementById('confettiLayer');
+  if (!el) return;
+  el.innerHTML = '';
   const colors = ['#ffb13d', '#35c976', '#54b8ff', '#8b6cff', '#ff5ea8'];
   for (let i = 0; i < 110; i++) {
     const p = document.createElement('div');
@@ -13,9 +15,9 @@ export function launchConfetti(container) {
     p.style.left = Math.random() * 100 + 'vw';
     p.style.background = colors[i % colors.length];
     p.style.animationDelay = Math.random() * 0.35 + 's';
-    container.appendChild(p);
+    el.appendChild(p);
   }
-  setTimeout(() => { container.innerHTML = ''; }, 2300);
+  setTimeout(() => { el.innerHTML = ''; }, 2300);
 }
 
 /**
