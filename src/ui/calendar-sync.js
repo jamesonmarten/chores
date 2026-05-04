@@ -18,11 +18,11 @@ const modalBox = () => document.getElementById('parentModalBox');
 function open(html) {
   modalBox().innerHTML = html;
   modal().hidden = false;
-  requestAnimationFrame(() => modal().style.opacity = '1');
+  requestAnimationFrame(() => modal().classList.add('show'));
 }
 function close() {
-  modal().style.opacity = '0';
-  setTimeout(() => { modal().hidden = true; modalBox().innerHTML = ''; }, 180);
+  modal().classList.remove('show');
+  setTimeout(() => { modal().hidden = true; modalBox().innerHTML = ''; }, 220);
 }
 
 let _filterKidIds = [];
