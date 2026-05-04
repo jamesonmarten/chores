@@ -28,9 +28,11 @@ import {
 } from './ui/signup.js';
 import { showCalendarSyncModal } from './ui/calendar-sync.js';
 import { schedulePush as schedulePushCal } from './utils/calendar-push.js';
+import { maybeEnableCouplesMode, couplesEnabled, showHoneyDueModal } from './ui/honeydue.js';
 
 // ── State ────────────────────────────────────────────────────────
 captureReferralFromUrl();
+maybeEnableCouplesMode();
 const state = load();
 
 // ── Screen helpers ───────────────────────────────────────────────
@@ -200,6 +202,10 @@ function renderParent() {
   const proBadge = document.getElementById('proBadge');
   if (proBadge) proBadge.hidden = !(isPro(state) || (loadAccount()?.paid));
 
+  // Honey-Do button (Partner Mode hidden feature)
+  const honeyBtn = document.getElementById('btnHoneyDo');
+  if (honeyBtn) honeyBtn.hidden = !couplesEnabled();
+
   // Trial banner + referral CTA wiring
   renderTrialBanner();
   const bUp = document.getElementById('bannerUpgrade');
@@ -220,6 +226,7 @@ document.getElementById('btnSettings').onclick = () => {
 };
 document.getElementById('btnCalendar').onclick = enterCalendarMode;
 document.getElementById('btnCalSync').onclick  = () => showCalendarSyncModal(state);
+document.getElementById('btnHoneyDo').onclick  = () => showHoneyDueModal();
 document.getElementById('btnSwitchToKid').onclick = () => {
   if (state.kids.length === 1) {
     enterKidMode(state.kids[0].id);

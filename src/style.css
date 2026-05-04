@@ -1467,3 +1467,87 @@ h1, h2, h3, h4, h5, h6, p, strong, span, label, a {
   transition: transform .15s, background .15s;
 }
 .shareBtn:hover { transform: translateY(-1px); background: rgba(56,189,248,.12); text-decoration: none; }
+
+/* ── Honey-Do / Partner Mode ────────────────────────────────────── */
+.honeyBtn {
+  background: linear-gradient(135deg, #ec4899, #8b5cf6) !important;
+  color: #fff !important; border: none !important; font-weight: 600;
+}
+.honeyHero { text-align: center; margin-bottom: 8px; }
+.honeyEm { font-size: 2.2rem; }
+.honeyTitle { margin: 4px 0 2px; font-size: 1.5rem; }
+.honeySub { color: var(--muted); font-size: .9rem; margin: 0 0 14px; }
+
+.honeyNames { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.honeyNames label { display: flex; flex-direction: column; gap: 4px; text-align: left; }
+.honeyLbl { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.honeyNames input {
+  background: rgba(255,255,255,.04); border: 1px solid var(--line);
+  color: var(--ink); padding: 10px 12px; border-radius: 12px; font-size: .95rem;
+}
+
+.honeyScoreRow {
+  display: flex; align-items: center; justify-content: center; gap: 18px;
+  background: rgba(236,72,153,.06); border: 1px solid rgba(236,72,153,.18);
+  border-radius: 18px; padding: 12px; margin-bottom: 14px;
+}
+.honeyScore { display: flex; flex-direction: column; align-items: center; min-width: 80px; }
+.honeyScoreNum { font-size: 1.7rem; font-weight: 700; color: #ec4899; }
+.honeyScoreLbl { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.honeyVs { color: var(--muted); font-weight: 600; }
+
+.honeyAdd { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; margin-bottom: 4px; }
+.honeyAdd input, .honeyAdd select {
+  background: rgba(255,255,255,.04); border: 1px solid var(--line);
+  color: var(--ink); padding: 10px 12px; border-radius: 12px; font-size: .92rem;
+}
+.honeyHint { color: var(--muted); font-size: .75rem; margin: 6px 2px 14px; text-align: left; }
+.honeyHint code { background: rgba(255,255,255,.06); padding: 1px 5px; border-radius: 4px; }
+
+.honeySect { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 16px 0 8px; text-align: left; }
+
+.honeyList { display: flex; flex-direction: column; gap: 6px; }
+.honeyList.faded { opacity: .65; }
+.honeyEmpty { color: var(--muted); font-size: .88rem; text-align: center; padding: 12px; border: 1px dashed var(--line); border-radius: 12px; }
+
+.honeyTask {
+  display: grid; grid-template-columns: auto 1fr auto auto auto auto; gap: 8px;
+  align-items: center; padding: 10px 12px; border-radius: 14px;
+  background: rgba(255,255,255,.03); border: 1px solid var(--line); text-align: left;
+}
+.honeyTask.me      { border-left: 3px solid #38bdf8; }
+.honeyTask.partner { border-left: 3px solid #ec4899; }
+.honeyTask.faded   { opacity: .55; }
+.honeyTaskWho   { font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.honeyTaskTitle { font-size: .95rem; font-weight: 500; }
+.honeyPts       { font-size: .8rem; font-weight: 700; color: #fbbf24; padding: 2px 8px; background: rgba(251,191,36,.12); border-radius: 999px; }
+.honeyDoneBtn   { background: linear-gradient(135deg,#10b981,#059669); color:#fff; border:none; padding:6px 12px; border-radius: 999px; font-size:.8rem; font-weight:600; cursor:pointer; }
+.honeyDel       { background: transparent; color: var(--muted); border:none; font-size: 1.1rem; cursor: pointer; padding: 0 4px; }
+.honeyDel:hover { color: #f87171; }
+.honeyPhotoBtn  { cursor: pointer; font-size: 1rem; padding: 4px 6px; border-radius: 8px; background: rgba(255,255,255,.04); }
+.honeyThumb     { width: 28px; height: 28px; object-fit: cover; border-radius: 6px; }
+.honeyDoneStamp { font-size: .72rem; color: #10b981; }
+
+.honeyIous { display: flex; flex-direction: column; gap: 6px; }
+.honeyIou {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px 12px; background: rgba(139,92,246,.08); border: 1px solid rgba(139,92,246,.25);
+  border-radius: 14px;
+}
+.honeyIouMain { display: flex; flex-direction: column; gap: 2px; text-align: left; }
+.honeyIouTitle { font-weight: 600; font-size: .92rem; }
+.honeyIouMeta { font-size: .72rem; color: var(--muted); }
+.honeyIouRedeem {
+  background: linear-gradient(135deg,#8b5cf6,#ec4899); color:#fff;
+  border:none; padding: 8px 14px; border-radius: 999px; font-size:.8rem; font-weight:600; cursor:pointer;
+}
+.honeyIouSuggest { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.honeyIouSuggest > span { font-size: .72rem; color: var(--muted); align-self: center; }
+.honeyChip { background: rgba(255,255,255,.05); color: var(--ink); border: 1px solid var(--line); padding: 6px 10px; border-radius: 999px; font-size: .75rem; cursor: pointer; }
+.honeyChip:hover { background: rgba(255,255,255,.1); }
+.honeyChip.add { border-style: dashed; color: var(--muted); }
+
+@media (max-width: 480px) {
+  .honeyAdd { grid-template-columns: 1fr; }
+  .honeyTask { grid-template-columns: 1fr auto; row-gap: 4px; }
+}
