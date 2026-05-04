@@ -1,0 +1,33 @@
+# Render Blueprint — auto-provisions the chores-api web service + persistent disk.
+# Usage: in Render dashboard → "New +" → "Blueprint" → connect this repo.
+# All env vars marked `sync: false` must be filled in via the Render dashboard
+# (they are secrets and won't be committed to git).
+services:
+  - type: web
+    name: chores-api
+    runtime: node
+    plan: starter            # $7/mo — required for persistent disk
+    region: oregon
+    rootDir: family-chores-more/server
+    buildCommand: npm install
+    startCommand: node index.js
+    healthCheckPath: /health
+    autoDeploy: true
+    branch: main
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: PORT
+        value: 4242
+      - key: CLIENT_URL
+        value: https://chores.devcabin.tech
+      - key: STRIPE_SECRET_KEY
+        sync: false          # paste sk_live_… in dashboard
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false          # paste whsec_… in dashboard
+      - key: STRIPE_PRICE_ID
+        sync: false          # paste price_… in dashboard
+    disk:
+      name: data
+      mountPath: /opt/render/project/src/family-chores-more/server/data
+      sizeGB: 1
