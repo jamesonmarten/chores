@@ -1,7 +1,7 @@
 // FILE: src/ui/honeydue.js
-// "Partner Mode" — the wife-controls-husband chore + IOU bank.
-// Self-contained: own localStorage namespace, reuses #parentModal shell.
-// Activated by ?couples=1 in the URL or localStorage.familyChoresCouplesEnabled=1.
+// "Partner Mode" — the ✨billion-dollar wife-controls-husband✨ feature.
+// Self-contained: own localStorage namespace, own modal renderer (reuses #parentModal box).
+// Activated by ?couples=1 in the URL or localStorage.familyChoresCouples=1.
 
 const STORE_KEY = 'familyChoresCouples';
 const FLAG_KEY  = 'familyChoresCouplesEnabled';
@@ -22,23 +22,35 @@ export function couplesEnabled() {
 }
 
 // ── Storage ─────────────────────────────────────────────────────────────────
+/**
+ * @typedef {{ id:string, title:string, pts:number, assignee:'me'|'partner', dueAt:number, doneAt?:number, photo?:string, createdBy:'me'|'partner' }} HoneyTask
+ * @typedef {{ id:string, title:string, costPts:number, owedBy:'me'|'partner', createdAt:number, redeemedAt?:number }} IOU
+ * @typedef {{ myName:string, partnerName:string, tasks:HoneyTask[], ious:IOU[], history:{at:number,msg:string}[], scores:{me:number,partner:number} }} CouplesState
+ */
+
+/** @returns {CouplesState} */
 function freshState() {
   return {
     myName: 'Me', partnerName: 'Partner',
-    tasks: [], ious: [], history: [],
+    tasks: [], ious: [],
+    history: [],
     scores: { me: 0, partner: 0 },
   };
 }
+
 export function loadCouples() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
     if (!raw) return freshState();
-    return { ...freshState(), ...JSON.parse(raw) };
+    const s = JSON.parse(raw);
+    return { ...freshState(), ...s };
   } catch { return freshState(); }
 }
 export function saveCouples(s) { localStorage.setItem(STORE_KEY, JSON.stringify(s)); }
 
 // ── Quick-add parser ────────────────────────────────────────────────────────
+// "trash, dishwasher, light bulb in hallway" → 3 tasks
+// "@me dishes" / "@partner trash" → assignee override
 export function parseQuickAdd(text, defaultAssignee = 'partner') {
   return text.split(/[,\n]+/).map(s => s.trim()).filter(Boolean).map(line => {
     let assignee = defaultAssignee;
@@ -50,11 +62,15 @@ export function parseQuickAdd(text, defaultAssignee = 'partner') {
     }
     return {
       id: 'h_' + Math.random().toString(36).slice(2, 8) + Date.now().toString(36),
-      title, pts: scorePts(title), assignee, createdBy: 'me',
+      title,
+      pts: scorePts(title),
+      assignee, createdBy: 'me',
       dueAt: endOfToday(),
     };
   });
 }
+
+// Cheap heuristic point value (longer or contains keywords = more pts)
 function scorePts(t) {
   const k = t.toLowerCase();
   if (/\b(deep clean|garage|yard|mow|gutter|paint|assembl)/.test(k)) return 50;
@@ -66,7 +82,7 @@ function endOfToday() {
   const d = new Date(); d.setHours(23,59,59,999); return d.getTime();
 }
 
-// ── Modal helpers (reuses parent modal shell) ───────────────────────────────
+// ── Modal helpers (reuses the existing parent modal shell) ──────────────────
 const modal    = () => document.getElementById('parentModal');
 const modalBox = () => document.getElementById('parentModalBox');
 function open(html) {
@@ -90,7 +106,7 @@ export function showHoneyDueModal() {
     <div class="honeyHero">
       <div class="honeyEm">💍</div>
       <h2 class="honeyTitle">Honey-Do</h2>
-      <p class="honeySub">A shared chore + IOU bank for partners. Mutual, opt-in, photo-receipted.</p>
+      <p class="honeySub">A shared chore + IOU bank for partners. Everything mutual, everything trackable.</p>
     </div>
 
     <div class="honeyNames">
@@ -116,12 +132,12 @@ export function showHoneyDueModal() {
 
     <h3 class="honeySect">Open chores (${open_.length})</h3>
     <div class="honeyList">
-      ${open_.length ? open_.map(t => taskRow(t, s)).join('') : '<div class="honeyEmpty">All clear. 🎉</div>'}
+      ${open_.length ? open_.map(t => taskRow(t, s)).join('') : `<div class="honeyEmpty">All clear. 🎉</div>`}
     </div>
 
     <h3 class="honeySect">IOU Bank (${openIous.length} open)</h3>
     <div class="honeyIous">
-      ${openIous.length ? openIous.map(i => iouRow(i, s)).join('') : '<div class="honeyEmpty">No IOUs yet. Earn 25+ pts to redeem.</div>'}
+      ${openIous.length ? openIous.map(i => iouRow(i, s)).join('') : `<div class="honeyEmpty">No IOUs yet. Earn 25+ pts to redeem.</div>`}
       <div class="honeyIouSuggest">
         <span>Suggested:</span>
         ${suggestIous().map(t => `<button class="honeyChip" data-suggest="${esc(t.title)}|${t.cost}">${esc(t.title)} · ${t.cost}pts</button>`).join('')}
@@ -131,11 +147,14 @@ export function showHoneyDueModal() {
 
     ${done_.length ? `
       <h3 class="honeySect">Recently completed</h3>
-      <div class="honeyList faded">${done_.map(t => taskRow(t, s, true)).join('')}</div>` : ''}
+      <div class="honeyList faded">
+        ${done_.map(t => taskRow(t, s, true)).join('')}
+      </div>` : ''}
 
     <button id="honeyClose" class="linkBtn" style="margin-top:18px">Close</button>
   `);
 
+  // Wire-up ──
   const re = () => { close(); requestAnimationFrame(showHoneyDueModal); };
 
   document.getElementById('hdMe').onchange      = e => { s.myName      = e.target.value.trim() || 'Me';      saveCouples(s); };
@@ -156,11 +175,14 @@ export function showHoneyDueModal() {
     if (e.key === 'Enter') document.getElementById('hdAddBtn').click();
   });
 
+  // Task actions
   modalBox().querySelectorAll('[data-done]').forEach(btn => btn.onclick = () => completeTask(s, btn.dataset.done, re));
   modalBox().querySelectorAll('[data-del]').forEach(btn => btn.onclick = () => {
     s.tasks = s.tasks.filter(t => t.id !== btn.dataset.del); saveCouples(s); re();
   });
   modalBox().querySelectorAll('[data-photo]').forEach(inp => inp.onchange = e => attachPhoto(s, inp.dataset.photo, e.target.files?.[0], re));
+
+  // IOU actions
   modalBox().querySelectorAll('[data-redeem]').forEach(btn => btn.onclick = () => redeemIou(s, btn.dataset.redeem, re));
   modalBox().querySelectorAll('[data-suggest]').forEach(btn => btn.onclick = () => {
     const [title, cost] = btn.dataset.suggest.split('|');
@@ -177,7 +199,8 @@ function taskRow(t, s, faded=false) {
   const cls = t.assignee === 'me' ? 'me' : 'partner';
   const photoBtn = t.doneAt
     ? (t.photo ? `<img src="${t.photo}" class="honeyThumb" alt="">` : '')
-    : `<label class="honeyPhotoBtn" title="Attach receipt photo">📷<input type="file" accept="image/*" capture="environment" data-photo="${t.id}" hidden></label>`;
+    : `<label class="honeyPhotoBtn" title="Attach receipt photo">📷
+         <input type="file" accept="image/*" capture="environment" data-photo="${t.id}" hidden></label>`;
   const action = t.doneAt
     ? `<span class="honeyDoneStamp">✓ ${new Date(t.doneAt).toLocaleDateString()}</span>`
     : `<button class="honeyDoneBtn" data-done="${t.id}">${t.photo ? '✓ Done' : 'Done'}</button>
@@ -206,15 +229,31 @@ function iouRow(i, s) {
 
 function suggestIous() {
   return [
-    { title: '1 hr uninterrupted gaming',  cost: 30 },
-    { title: 'Saturday morning sleep-in',  cost: 50 },
-    { title: 'Pick the restaurant',        cost: 20 },
-    { title: 'Foot rub, no questions',     cost: 25 },
-    { title: 'Movie night, your pick',     cost: 30 },
-    { title: 'One day off chore duty',     cost: 75 },
+    { title: '1 hr uninterrupted gaming',      cost: 30 },
+    { title: 'Saturday morning sleep-in',      cost: 50 },
+    { title: 'Pick the restaurant',            cost: 20 },
+    { title: 'Foot rub, no questions',         cost: 25 },
+    { title: 'Movie night, your pick',         cost: 30 },
+    { title: 'One day off chore duty',         cost: 75 },
+    // 🌶️ Spicy tier — your dad's contribution. Hidden behind ?spicy=1.
+    ...(spicyEnabled() ? [
+      { title: '🌶️ More 😏 (whichever is the bigger reward)',   cost: 60 },
+      { title: '🧊 No 😏 for a week (whichever is the bigger punishment)', cost: 60 },
+      { title: '🛁 Long bath, door locked, no kids',                       cost: 40 },
+      { title: '💃 Date night, you plan everything',                        cost: 45 },
+    ] : []),
   ];
 }
 
+function spicyEnabled() {
+  try {
+    const u = new URL(location.href);
+    if (u.searchParams.get('spicy') === '1') localStorage.setItem('familyChoresSpicy', '1');
+    return localStorage.getItem('familyChoresSpicy') === '1';
+  } catch { return false; }
+}
+
+// ── Logic ──────────────────────────────────────────────────────────────────
 function completeTask(s, id, re) {
   const t = s.tasks.find(x => x.id === id);
   if (!t || t.doneAt) return;
@@ -244,6 +283,7 @@ function createIou(s, { title, costPts, owedBy }) {
 function redeemIou(s, id, re) {
   const i = s.ious.find(x => x.id === id);
   if (!i || i.redeemedAt) return;
+  // The creditor (opposite of owedBy) spends their points to claim.
   const creditor = i.owedBy === 'me' ? 'partner' : 'me';
   if ((s.scores[creditor] || 0) < i.costPts) {
     alert(`Not enough points yet — need ${i.costPts}, have ${s.scores[creditor]|0}.`);
@@ -256,7 +296,7 @@ function redeemIou(s, id, re) {
   re();
 }
 function promptCustomIou(s, re) {
-  const title = prompt("What's the reward?");
+  const title = prompt('What\'s the reward?');
   if (!title) return;
   const cost = Number(prompt('Cost in points?', '30'));
   if (!cost || cost < 1) return;
@@ -265,6 +305,7 @@ function promptCustomIou(s, re) {
   re();
 }
 
+// ── utils ──
 function esc(s='') {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
