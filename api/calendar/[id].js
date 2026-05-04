@@ -2,8 +2,8 @@
 // Handles BOTH:
 //   POST /api/calendar/:id        → store events
 //   GET  /api/calendar/:id.ics    → return subscribable iCal feed
-// Vercel's [id] dynamic segment captures "smoketest.ics" as the literal id;
-// we strip the .ics suffix below to decide which behavior to run.
+// (Vercel's [id] dynamic segment captures "smoketest.ics" as the literal id;
+//  we strip the .ics suffix below to decide which behavior to run.)
 
 import { withCors } from '../_lib/cors.js';
 import { getStore } from '../_lib/store.js';

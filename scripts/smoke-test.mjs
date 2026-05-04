@@ -76,7 +76,7 @@ console.log('\nAPI endpoints:');
 await check('/health',                 async () => {
   const j = await expect(API + '/health', { json: true });
   if (!j.ok) throw new Error('health responded ok=false');
-  if (j.priceId      !== 'set') throw new Error('STRIPE_PRICE_ID not set on server');
+  if (j.priceId === 'missing') throw new Error('Neither STRIPE_PRICE_ID nor STRIPE_PRODUCT_ID set on server');
   if (j.webhookSecret!== 'set') throw new Error('STRIPE_WEBHOOK_SECRET not set on server');
   if (j.stripeKey    !== 'set') throw new Error('STRIPE_SECRET_KEY not set on server');
 });
