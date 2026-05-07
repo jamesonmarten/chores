@@ -1,8 +1,16 @@
-// filepath: /Users/jamesonmarten/dev/devcabin-ai-chores/family-chores-more/src/ui/calendar.js
 // FILE: src/ui/calendar.js
-import { getPoints, getMaxPoints, kidState, getTasksSorted } from '../state/store.js';
-import { today } from '../utils/date.js';
+import {
+  getPoints, setPoints, getMaxPoints, kidState, getTasksSorted,
+  logHistory, updateStreak, save,
+} from '../state/store.js';
+import { today, taskKey } from '../utils/date.js';
+import { playSfx } from '../utils/effects.js';
+import { launchConfetti } from '../utils/helpers.js';
 
+/**
+ * The calendar keeps an "anchor" date that month/week/day views revolve around.
+ * Defaults to today; nav buttons move it; clicking a day drills into Day view.
+ */
 let anchor = new Date();
 let currentView = 'month';
 let _state = null;
@@ -18,6 +26,7 @@ const isoOf = (d) => {
 const avatarOf = (kid) =>
   kid.photo ? `<img class="kidAvImg" src="${kid.photo}" alt="">` : (kid.avatar || kid.initial);
 
+/** Public entry point. View = 'month' | 'week' | 'day'. Optional anchorDate. */
 export function renderCalendarView(state, view = 'month', anchorDate) {
   _state = state;
   currentView = view;
@@ -31,18 +40,19 @@ export function renderCalendarView(state, view = 'month', anchorDate) {
   else                      renderMonthGrid(state);
 }
 
+/** Move the anchor by one unit of the current view (or +/-N units). */
 export function calNav(delta = 1) {
   if (currentView === 'month') anchor.setMonth(anchor.getMonth() + delta);
   else if (currentView === 'week') anchor.setDate(anchor.getDate() + 7 * delta);
   else anchor.setDate(anchor.getDate() + delta);
   renderCalendarView(_state, currentView);
 }
-
 export function calToday() {
   anchor = new Date();
   renderCalendarView(_state, currentView);
 }
 
+/** Allow main.js to register a "drill into day" callback when a cell is clicked. */
 export function onCalendarDayClick(fn) { _onDayClick = fn; }
 
 function updateHeaderLabel() {
@@ -69,6 +79,7 @@ function startOfWeek(d) {
   return x;
 }
 
+/** "Today's snapshot" strip — one row per kid */
 function renderTodayStrip(state) {
   const el = document.getElementById('calTodayStrip');
   if (!el) return;
@@ -94,11 +105,23 @@ function renderTodayStrip(state) {
   }).join('');
 }
 
+/** Full month grid — each day cell shows a mini row per kid; click drills into Day view. */
 function renderMonthGrid(state) {
   const el = document.getElementById('calGrid');
   if (!el) return;
   el.className = 'calMonthGrid';
   el.innerHTML = '';
+
+  // Tiny legend in the top-right corner
+  const legend = document.createElement('div');
+  legend.className = 'calLegend';
+  legend.innerHTML = `
+    <span class="calLegendItem"><span class="calLegSwatch empty"></span>None</span>
+    <span class="calLegendItem"><span class="calLegSwatch partial"></span>Partial</span>
+    <span class="calLegendItem"><span class="calLegSwatch complete"></span>All done 🏆</span>
+    <span class="calLegendItem"><span class="calLegSwatch today"></span>Today</span>
+  `;
+  el.appendChild(legend);
 
   const y = anchor.getFullYear();
   const m = anchor.getMonth();
@@ -151,6 +174,7 @@ function renderMonthGrid(state) {
   }
 }
 
+/** Week grid — columns = days of selected week, rows = kids; bars clickable. */
 function renderWeekGrid(state) {
   const el = document.getElementById('calGrid');
   if (!el) return;
@@ -206,6 +230,7 @@ function renderWeekGrid(state) {
   });
 }
 
+/** Day view — full per-kid task breakdown for the anchor date. */
 function renderDayGrid(state) {
   const el = document.getElementById('calGrid');
   if (!el) return;
@@ -241,7 +266,7 @@ function renderDayGrid(state) {
             <ul class="calDayTaskList">
               ${tasks.length ? tasks.map(t => {
                 const isDone = !!(ks.done || {})[`${iso}_${t.id}`];
-                return `<li class="calDayTask ${isDone ? 'done' : ''}">
+                return `<li class="calDayTask clickable ${isDone ? 'done' : ''}" data-kid="${kid.id}" data-task="${t.id}" data-iso="${iso}">
                   <span class="cdtCheck">${isDone ? '✅' : '⬜'}</span>
                   <span class="cdtEmoji">${t.emoji || '✅'}</span>
                   <span class="cdtTitle">${t.title}</span>
@@ -253,6 +278,42 @@ function renderDayGrid(state) {
       }).join('')}
     </div>
   `;
+
+  // Wire toggles
+  el.querySelectorAll('.calDayTask.clickable').forEach(li => {
+    li.onclick = () => toggleTaskOnDate(li.dataset.kid, li.dataset.task, li.dataset.iso);
+  });
+}
+
+/** Toggle a task done/undone for a specific ISO date (Day view interactions). */
+function toggleTaskOnDate(kidId, taskId, iso) {
+  const ks = kidState(_state, kidId);
+  const task = (_state.tasks[kidId] || []).find(t => t.id === taskId);
+  if (!task) return;
+  const dKey = iso + '_' + taskId;
+  ks.done = ks.done || {};
+  const wasDone = !!ks.done[dKey];
+  if (wasDone) {
+    delete ks.done[dKey];
+    setPoints(_state, kidId, Math.max(0, getPoints(_state, kidId, iso) - task.pts), iso);
+    ks.totalPoints = Math.max(0, (ks.totalPoints || 0) - task.pts);
+  } else {
+    ks.done[dKey] = true;
+    setPoints(_state, kidId, getPoints(_state, kidId, iso) + task.pts, iso);
+    ks.totalPoints = (ks.totalPoints || 0) + task.pts;
+    logHistory(_state, kidId, { message: `"${task.title}" marked done from calendar`, task: task.title, pts: task.pts });
+    playSfx('done');
+    const newPts = getPoints(_state, kidId, iso);
+    const maxPts = getMaxPoints(_state, kidId);
+    if (newPts >= maxPts) {
+      ks.treats = (ks.treats || 0) + 1;
+      if (iso === today()) updateStreak(_state, kidId);
+      launchConfetti();
+      playSfx('levelUp');
+    }
+  }
+  save(_state);
+  renderCalendarView(_state, currentView);
 }
 
 function drillToDay(d) {

@@ -158,6 +158,27 @@ function renderKidTasks() {
     wrap.innerHTML = '<div class="kidNoTasks">No chores yet! Ask a parent to add some.</div>';
   }
 
+  // Tomorrow preview (collapsed by default)
+  if (tasks.length > 0) {
+    const tomorrow = document.createElement('details');
+    tomorrow.className = 'kidTomorrow';
+    const totalPts = tasks.reduce((a, t) => a + t.pts, 0);
+    tomorrow.innerHTML = `
+      <summary class="kidTomorrowSummary">
+        🔮 <strong>Tomorrow</strong> · ${tasks.length} chores · up to ${totalPts} pts
+      </summary>
+      <div class="kidTomorrowList">
+        ${tasks.map(t => `
+          <div class="kidTomRow" style="--kid:${kid.color}">
+            <span>${t.emoji || '✅'}</span>
+            <span class="ktTitle">${t.title}</span>
+            <span class="ktPts">+${t.pts}</span>
+          </div>`).join('')}
+      </div>
+    `;
+    wrap.appendChild(tomorrow);
+  }
+
   // Wire extras
   wrap.querySelectorAll('[data-video]').forEach(b => b.onclick = (e) => {
     e.stopPropagation();
