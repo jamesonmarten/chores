@@ -999,10 +999,18 @@ h1, h2, h3, h4, h5, h6, p, strong, span, label, a {
 .smallBtn.orange{ background: rgba(245,158,11,.18); border-color: rgba(245,158,11,.3); color: #fde68a; }
 .tinyBtn {
   background: none; border: none;
-  font-size: .85rem; min-height: 24px; padding: 2px 6px;
-  opacity: .7; transition: opacity .12s;
+  font-size: 1rem;
+  /* Bumped to a real iOS-friendly tap target (Apple HIG = 44pt) */
+  min-height: 40px; min-width: 40px;
+  padding: 6px 10px;
+  opacity: .85; transition: opacity .12s, background .12s;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  -webkit-tap-highlight-color: rgba(255,255,255,.12);
+  touch-action: manipulation;
 }
-.tinyBtn:hover { opacity: 1; }
+.tinyBtn:hover, .tinyBtn:active { opacity: 1; background: rgba(255,255,255,.08); }
 .tinyBtn.red { color: #fca5a5; }
 
 /* ── Parent Modal Forms ─────────────────────────────────────────── */
@@ -1011,8 +1019,15 @@ h1, h2, h3, h4, h5, h6, p, strong, span, label, a {
   background: rgba(2,6,23,.82);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  display: flex; align-items: center; justify-content: center;
-  padding: 20px;
+  /* Allow vertical scroll when modal content is taller than viewport (iPhone) */
+  display: flex; align-items: flex-start; justify-content: center;
+  padding:
+    max(20px, env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right))
+    max(20px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   opacity: 0; pointer-events: none;
   transition: opacity .2s ease;
 }
@@ -1024,8 +1039,11 @@ h1, h2, h3, h4, h5, h6, p, strong, span, label, a {
   border: 1px solid var(--line);
   border-radius: 28px;
   padding: 28px;
+  /* Top padding compensates for the close ✕ floating in the corner */
+  padding-top: 56px;
   width: 100%;
   max-width: 420px;
+  margin: auto;            /* keeps it centered when shorter than viewport */
   box-shadow: 0 30px 80px rgba(0,0,0,.6);
   animation: riseIn .22s ease both;
   text-align: center;
@@ -1037,14 +1055,20 @@ h1, h2, h3, h4, h5, h6, p, strong, span, label, a {
 .price { font-size: 1.6rem; font-weight: 1000; color: var(--blue); margin: 8px 0; }
 
 .modalCloseX {
-  position: absolute; top: 14px; right: 14px;
-  background: rgba(255,255,255,.08); border: 1px solid var(--line);
-  color: var(--ink); border-radius: 8px;
-  width: 32px; height: 32px; padding: 0;
-  font-size: .9rem; font-weight: 900;
+  position: absolute; top: 12px; right: 12px;
+  background: rgba(255,255,255,.12); border: 1px solid var(--line);
+  color: var(--ink); border-radius: 12px;
+  /* iOS HIG-compliant 44×44 tap target */
+  width: 44px; height: 44px; padding: 0;
+  font-size: 1.1rem; font-weight: 900;
   display: flex; align-items: center; justify-content: center;
   min-height: unset;
+  cursor: pointer;
+  z-index: 2;
+  -webkit-tap-highlight-color: rgba(255,255,255,.2);
+  touch-action: manipulation;
 }
+.modalCloseX:active { transform: scale(.92); background: rgba(255,255,255,.2); }
 .pmTitle { font-size: 1.25rem; font-weight: 1000; margin: 0 0 18px; padding-right: 30px; }
 .pmForm { display: flex; flex-direction: column; gap: 12px; }
 .pmForm label { display: flex; flex-direction: column; gap: 5px; font-size: .85rem; font-weight: 800; color: var(--muted); }
@@ -2701,4 +2725,24 @@ html.frameMode body > *:not(#frameLayer) { display: none !important; }
 }
 .shareActionsRow {
   display: flex; gap: 8px; flex-wrap: wrap;
+}
+
+/* ── v2.1.1 Mobile tap-target & modal scrolling fixes ───────────── */
+@media (max-width: 700px) {
+  /* Bigger tap targets in parent task rows on phones */
+  .pTaskRow .tinyBtn { min-height: 44px; min-width: 44px; font-size: 1.1rem; }
+  .pTaskRow .pTaskCheck { font-size: 1.4rem; padding: 4px 6px; }
+  .pTaskRow .pDragHandle { display: none; }     /* drag isn't usable on touch anyway */
+  .pTaskRow { gap: 6px; padding: 8px 6px; }
+  .pTaskTitle { flex: 1 1 auto; min-width: 0; word-break: break-word; }
+
+  /* Make modal scroll nicely on iPhone instead of clipping the close button */
+  .modalBox { padding: 22px 18px; padding-top: 60px; border-radius: 22px; }
+  .modalBox.wide { max-width: 100%; }
+  .modalCloseX { width: 48px; height: 48px; top: 10px; right: 10px; font-size: 1.2rem; }
+
+  /* Signup form: keep CTA reachable, allow scroll */
+  .signupForm .signupCTA { padding: 16px; font-size: 1.05rem; min-height: 52px; }
+  .signupForm input, .signupForm select { min-height: 48px; font-size: 1rem; }
+  .signupRow { grid-template-columns: 1fr; }
 }

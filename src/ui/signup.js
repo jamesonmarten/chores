@@ -14,6 +14,10 @@ function open(html) {
   modal().hidden = false;
   // Add .show on next frame so the CSS transition can run AND pointer-events flip on.
   requestAnimationFrame(() => modal().classList.add('show'));
+  // Backdrop tap closes (iPhone escape hatch when content overflows)
+  modal().onclick = (e) => { if (e.target === modal()) close(); };
+  // Scroll modal back to top so the close ✕ is visible on small screens
+  modal().scrollTop = 0;
 }
 function close() {
   modal().classList.remove('show');
@@ -24,6 +28,7 @@ function close() {
 export function showSignupModal(onComplete) {
   const refCode = pendingReferral();
   open(`
+    <button class="modalCloseX" id="signupCloseBtn" aria-label="Close">✕</button>
     <div class="signupHero">
       <div class="signupBadge">${refCode ? `🎁 Referred by <strong>${refCode}</strong> — both of you get a free month!` : '✨ 7-day free trial — no card required'}</div>
       <h2 class="signupTitle">Create your family account</h2>
@@ -73,11 +78,13 @@ export function showSignupModal(onComplete) {
     close();
     onComplete?.(acct);
   };
+  document.getElementById('signupCloseBtn').onclick = () => close();
 }
 
 // ── PAYWALL (trial expired) ────────────────────────────────────────
 export function showPaywallModal(onUpgrade, onLogout) {
   open(`
+    <button class="modalCloseX" id="paywallCloseBtn" aria-label="Close">✕</button>
     <div class="paywallBox">
       <div class="paywallEmoji">🎁</div>
       <h2 class="paywallTitle">Your free trial has ended</h2>
@@ -94,6 +101,7 @@ export function showPaywallModal(onUpgrade, onLogout) {
   `);
   document.getElementById('paywallUpgrade').onclick = () => { close(); onUpgrade?.(); };
   document.getElementById('paywallLogout').onclick  = () => { close(); onLogout?.(); };
+  document.getElementById('paywallCloseBtn').onclick = () => close();
 }
 
 // ── TRIAL BANNER (top of parent dashboard) ─────────────────────────
@@ -136,6 +144,7 @@ export function showReferralModal() {
   if (!acct) return;
   const link = buildReferralLink(acct);
   open(`
+    <button class="modalCloseX" id="referCloseX" aria-label="Close">✕</button>
     <div class="referBox">
       <div class="referEmoji">🎁</div>
       <h2 class="referTitle">Give a month, get a month</h2>
@@ -174,6 +183,7 @@ export function showReferralModal() {
     }
   };
   document.getElementById('referClose').onclick = close;
+  document.getElementById('referCloseX').onclick = close;
 }
 
 // ── ACCESS GUARD ───────────────────────────────────────────────────
