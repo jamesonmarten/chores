@@ -30,16 +30,20 @@ import { showCalendarSyncModal } from './ui/calendar-sync.js';
 import { schedulePush as schedulePushCal } from './utils/calendar-push.js';
 import { maybeEnableCouplesMode, couplesEnabled, showHoneyDueModal } from './ui/honeydue.js';
 import { showRewardsModal } from './ui/rewards.js';
+import { showLeaderboardModal } from './ui/leaderboard.js';
+import { showWeeklyReport } from './ui/report.js';
 import { applyThemeBoot } from './utils/theme.js';
 import { applyEffectsBoot } from './utils/effects.js';
 import { getTheme, setTheme } from './utils/theme.js';
 import { sfxOn, setSfx, playSfx } from './utils/effects.js';
+import { notifyBoot } from './utils/notify.js';
 
 // ── State ────────────────────────────────────────────────────────
 captureReferralFromUrl();
 maybeEnableCouplesMode();
 applyThemeBoot();
 applyEffectsBoot();
+notifyBoot();
 const state = load();
 
 // ── Screen helpers ───────────────────────────────────────────────
@@ -253,6 +257,8 @@ document.getElementById('btnCalendar').onclick = enterCalendarMode;
 document.getElementById('btnCalSync').onclick  = () => showCalendarSyncModal(state);
 document.getElementById('btnHoneyDo').onclick  = () => showHoneyDueModal();
 document.getElementById('btnRewards').onclick  = () => showRewardsModal(state, () => renderParent());
+document.getElementById('btnLeaderboard').onclick = () => showLeaderboardModal(state);
+document.getElementById('btnWeeklyReport').onclick = () => showWeeklyReport(state);
 document.getElementById('btnSwitchToKid').onclick = () => {
   if (state.kids.length === 1) {
     enterKidMode(state.kids[0].id);

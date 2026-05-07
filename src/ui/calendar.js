@@ -1,11 +1,16 @@
 // FILE: src/ui/calendar.js
 import {
   getPoints, setPoints, getMaxPoints, kidState, getTasksSorted,
-  logHistory, updateStreak, save,
+  logHistory, updateStreak, save, reorderTasks,
 } from '../state/store.js';
 import { today, taskKey } from '../utils/date.js';
 import { playSfx } from '../utils/effects.js';
 import { launchConfetti } from '../utils/helpers.js';
+
+// Multi-select state for Day view bulk-mark mode.
+let _selectMode = false;
+let _selected = new Set(); // keys: `${kidId}|${taskId}`
+const selKey = (k, t) => `${k}|${t}`;
 
 /**
  * The calendar keeps an "anchor" date that month/week/day views revolve around.
@@ -152,11 +157,18 @@ function renderMonthGrid(state) {
     const timeClass   = iso < todayIso ? 'past' : iso === todayIso ? 'today' : 'future';
     const fillClass   = allComplete ? 'complete' : anyProgress ? 'partial' : 'empty';
 
+    // Family streak length ENDING at this day (consecutive complete days back-to-back).
+    const streakLen = familyStreakAt(state, iso);
+    const streakBadge = streakLen >= 2
+      ? `<div class="calStreakBadge" title="${streakLen}-day family streak">🔥${streakLen >= 3 ? streakLen : ''}</div>`
+      : '';
+
     const box = document.createElement('button');
     box.type = 'button';
     box.className = `calDay clickable ${timeClass} ${fillClass}`;
     box.innerHTML = `
       <div class="calDate">${d}</div>
+      ${streakBadge}
       <div class="calDayKids">
         ${kidPoints.map(({ kid, pts, maxPts }) => {
           const pct = maxPts ? Math.min(100, Math.round(pts / maxPts * 100)) : 0;
@@ -172,6 +184,25 @@ function renderMonthGrid(state) {
     box.onclick = () => drillToDay(new Date(y, m, d));
     el.appendChild(box);
   }
+}
+
+/** Walk back from `iso`, counting consecutive days where ALL kids hit their max. */
+function familyStreakAt(state, iso) {
+  if (!state.kids.length) return 0;
+  let count = 0;
+  const cur = new Date(iso + 'T12:00:00');
+  while (true) {
+    const key = isoOf(cur);
+    const allDone = state.kids.every(k => {
+      const max = getMaxPoints(state, k.id);
+      return max > 0 && (getPoints(state, k.id, key) >= max);
+    });
+    if (!allDone) break;
+    count++;
+    cur.setDate(cur.getDate() - 1);
+    if (count > 366) break; // safety
+  }
+  return count;
 }
 
 /** Week grid — columns = days of selected week, rows = kids; bars clickable. */
@@ -237,12 +268,21 @@ function renderDayGrid(state) {
   el.className = 'calDayView';
   const iso = isoOf(anchor);
   const isToday = iso === today();
+  const selCount = _selected.size;
 
   el.innerHTML = `
     <div class="calDayHeader">
       <div class="calDayBig">${anchor.toLocaleDateString('en-US', { weekday: 'long' })}</div>
       <div class="calDayDate">${anchor.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
       ${isToday ? '<span class="calDayBadge">Today</span>' : ''}
+      <div class="calDayToolbar">
+        <button type="button" class="smallBtn ${_selectMode ? 'active' : ''}" id="calToggleSelect">
+          ${_selectMode ? '✓ Select mode' : '☐ Select'}
+        </button>
+        <button type="button" class="smallBtn green" id="calBulkDone" ${selCount ? '' : 'disabled'}>Mark done (${selCount})</button>
+        <button type="button" class="smallBtn" id="calBulkUndo" ${selCount ? '' : 'disabled'}>Undo (${selCount})</button>
+        <button type="button" class="smallBtn" id="calClearSel" ${selCount ? '' : 'disabled'}>Clear</button>
+      </div>
     </div>
     <div class="calDayKidsList">
       ${state.kids.map(kid => {
@@ -263,10 +303,15 @@ function renderDayGrid(state) {
               </div>
               <div class="calDayKidBar"><div style="width:${pct}%;background:${kid.color}"></div></div>
             </header>
-            <ul class="calDayTaskList">
+            <ul class="calDayTaskList ${_selectMode ? 'selecting' : ''}" data-kid-list="${kid.id}">
               ${tasks.length ? tasks.map(t => {
                 const isDone = !!(ks.done || {})[`${iso}_${t.id}`];
-                return `<li class="calDayTask clickable ${isDone ? 'done' : ''}" data-kid="${kid.id}" data-task="${t.id}" data-iso="${iso}">
+                const isSel  = _selected.has(selKey(kid.id, t.id));
+                return `<li class="calDayTask clickable ${isDone ? 'done' : ''} ${isSel ? 'selected' : ''}"
+                  draggable="true"
+                  data-kid="${kid.id}" data-task="${t.id}" data-iso="${iso}">
+                  <span class="cdtDrag" title="Drag to reorder">⋮⋮</span>
+                  ${_selectMode ? `<span class="cdtSelBox">${isSel ? '☑' : '☐'}</span>` : ''}
                   <span class="cdtCheck">${isDone ? '✅' : '⬜'}</span>
                   <span class="cdtEmoji">${t.emoji || '✅'}</span>
                   <span class="cdtTitle">${t.title}</span>
@@ -279,9 +324,142 @@ function renderDayGrid(state) {
     </div>
   `;
 
-  // Wire toggles
+  // Toolbar wiring
+  document.getElementById('calToggleSelect').onclick = () => {
+    _selectMode = !_selectMode;
+    if (!_selectMode) _selected.clear();
+    renderCalendarView(_state, currentView);
+  };
+  document.getElementById('calBulkDone').onclick = () => bulkApply(true);
+  document.getElementById('calBulkUndo').onclick = () => bulkApply(false);
+  document.getElementById('calClearSel').onclick = () => {
+    _selected.clear();
+    renderCalendarView(_state, currentView);
+  };
+
+  // Per-task wiring: click (toggle or select), drag (reorder within kid)
   el.querySelectorAll('.calDayTask.clickable').forEach(li => {
-    li.onclick = () => toggleTaskOnDate(li.dataset.kid, li.dataset.task, li.dataset.iso);
+    li.addEventListener('click', (e) => {
+      // Shift-click toggles into select mode for quick multi-select
+      if (e.shiftKey) {
+        _selectMode = true;
+        toggleSelection(li.dataset.kid, li.dataset.task);
+        renderCalendarView(_state, currentView);
+        return;
+      }
+      if (_selectMode) {
+        toggleSelection(li.dataset.kid, li.dataset.task);
+        renderCalendarView(_state, currentView);
+        return;
+      }
+      toggleTaskOnDate(li.dataset.kid, li.dataset.task, li.dataset.iso);
+    });
+  });
+
+  // DnD reorder within each kid's list
+  state.kids.forEach(kid => {
+    const list = el.querySelector(`[data-kid-list="${kid.id}"]`);
+    if (list) enableDayDragReorder(list, kid.id);
+  });
+}
+
+function toggleSelection(kidId, taskId) {
+  const k = selKey(kidId, taskId);
+  if (_selected.has(k)) _selected.delete(k);
+  else _selected.add(k);
+}
+
+function bulkApply(markDone) {
+  const iso = isoOf(anchor);
+  const items = Array.from(_selected).map(k => {
+    const [kidId, taskId] = k.split('|');
+    return { kidId, taskId };
+  });
+  if (!items.length) return;
+
+  let anyChanged = false;
+  let anyComplete = false;
+
+  items.forEach(({ kidId, taskId }) => {
+    const ks = kidState(_state, kidId);
+    const task = (_state.tasks[kidId] || []).find(t => t.id === taskId);
+    if (!task) return;
+    const dKey = iso + '_' + taskId;
+    ks.done = ks.done || {};
+    const wasDone = !!ks.done[dKey];
+    if (markDone && !wasDone) {
+      ks.done[dKey] = true;
+      setPoints(_state, kidId, getPoints(_state, kidId, iso) + task.pts, iso);
+      ks.totalPoints = (ks.totalPoints || 0) + task.pts;
+      logHistory(_state, kidId, { message: `"${task.title}" bulk-marked from calendar`, task: task.title, pts: task.pts });
+      anyChanged = true;
+    } else if (!markDone && wasDone) {
+      delete ks.done[dKey];
+      setPoints(_state, kidId, Math.max(0, getPoints(_state, kidId, iso) - task.pts), iso);
+      ks.totalPoints = Math.max(0, (ks.totalPoints || 0) - task.pts);
+      anyChanged = true;
+    }
+  });
+
+  // Check for newly-complete kids
+  if (markDone) {
+    const touchedKids = [...new Set(items.map(i => i.kidId))];
+    touchedKids.forEach(kidId => {
+      const ks = kidState(_state, kidId);
+      const newPts = getPoints(_state, kidId, iso);
+      const maxPts = getMaxPoints(_state, kidId);
+      if (maxPts > 0 && newPts >= maxPts) {
+        ks.treats = (ks.treats || 0) + 1;
+        if (iso === today()) updateStreak(_state, kidId);
+        anyComplete = true;
+      }
+    });
+  }
+
+  if (anyChanged) {
+    save(_state);
+    playSfx(markDone ? 'done' : 'tick');
+    if (anyComplete) { launchConfetti(); playSfx('levelUp'); }
+  }
+
+  _selected.clear();
+  renderCalendarView(_state, currentView);
+}
+
+/** HTML5 drag-and-drop reorder of a kid's task list within Day view. */
+function enableDayDragReorder(listEl, kidId) {
+  let dragId = null;
+  listEl.querySelectorAll('.calDayTask.clickable').forEach(row => {
+    row.addEventListener('dragstart', (e) => {
+      dragId = row.dataset.task;
+      row.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', dragId); } catch {}
+    });
+    row.addEventListener('dragend', () => {
+      row.classList.remove('dragging');
+      listEl.querySelectorAll('.calDayTask').forEach(r => r.classList.remove('dropTarget'));
+    });
+    row.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (row.dataset.task === dragId) return;
+      row.classList.add('dropTarget');
+    });
+    row.addEventListener('dragleave', () => row.classList.remove('dropTarget'));
+    row.addEventListener('drop', (e) => {
+      e.preventDefault();
+      row.classList.remove('dropTarget');
+      if (!dragId || dragId === row.dataset.task) return;
+      const ids = Array.from(listEl.querySelectorAll('.calDayTask.clickable')).map(r => r.dataset.task);
+      const fromIdx = ids.indexOf(dragId);
+      const toIdx   = ids.indexOf(row.dataset.task);
+      if (fromIdx < 0 || toIdx < 0) return;
+      ids.splice(fromIdx, 1);
+      ids.splice(toIdx, 0, dragId);
+      reorderTasks(_state, kidId, ids);
+      renderCalendarView(_state, currentView);
+    });
   });
 }
 

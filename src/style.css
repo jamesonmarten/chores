@@ -2189,3 +2189,122 @@ html.no-anim #confettiLayer { display: none !important; }
 }
 .ktTitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ktPts   { color: var(--text-dim); font-size: .85em; }
+
+/* ── v1.5: Calendar streak badges ─────────────────────────────── */
+.calDay { position: relative; }
+.calStreakBadge {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: .75em;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ff8a3d, #ff5e3a);
+  color: #fff;
+  padding: 1px 6px;
+  border-radius: 999px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.25);
+  pointer-events: none;
+}
+
+/* ── v1.5: Day-view bulk toolbar ──────────────────────────────── */
+.calDayToolbar {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-top: 10px; width: 100%;
+}
+.calDayToolbar .smallBtn.active {
+  background: #54b8ff; color: #fff; border-color: transparent;
+}
+.calDayToolbar .smallBtn[disabled] { opacity: .45; cursor: not-allowed; }
+
+/* ── v1.5: Day-view DnD + multi-select ────────────────────────── */
+.calDayTask { position: relative; }
+.cdtDrag {
+  cursor: grab; color: var(--text-dim); font-weight: 700;
+  padding: 0 4px; user-select: none; opacity: .55;
+}
+.cdtDrag:active { cursor: grabbing; }
+.calDayTask.dragging { opacity: .4; outline: 2px dashed var(--kid, #54b8ff); }
+.calDayTask.dropTarget {
+  background: color-mix(in srgb, var(--kid, #54b8ff) 18%, transparent);
+  outline: 2px solid var(--kid, #54b8ff);
+}
+.calDayTaskList.selecting .calDayTask.clickable { padding-left: 4px; }
+.cdtSelBox { font-size: 1.15em; color: var(--text-dim); padding: 0 4px; }
+.calDayTask.selected {
+  background: color-mix(in srgb, var(--kid, #54b8ff) 22%, transparent);
+  outline: 2px solid var(--kid, #54b8ff);
+}
+.calDayTask.selected .cdtSelBox { color: var(--kid, #54b8ff); }
+
+/* ── v1.5: Leaderboard modal ──────────────────────────────────── */
+.lbSub { text-align: center; color: var(--text-dim); margin: -6px 0 14px; font-size: .95em; }
+.lbList { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.lbRow {
+  display: grid;
+  grid-template-columns: 44px 44px 1fr auto;
+  gap: 12px; align-items: center;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--kid, #54b8ff);
+  border-radius: 12px;
+}
+.lbWinner {
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--kid, #ffd93d) 18%, var(--surface)),
+    var(--surface));
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--kid, #ffd93d) 25%, transparent);
+}
+.lbRank { font-size: 1.4em; font-weight: 700; text-align: center; color: var(--text-dim); }
+.lbWinner .lbRank { color: #ffb13d; }
+.lbAvatar {
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-2); border-radius: 50%;
+  font-size: 1.4em; overflow: hidden;
+}
+.lbAvatar img { width: 100%; height: 100%; object-fit: cover; }
+.lbInfo { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.lbInfo strong { font-size: 1.05em; }
+.lbInfo span { font-size: .85em; color: var(--text-dim); }
+.lbBar { height: 6px; background: var(--surface-2); border-radius: 999px; overflow: hidden; margin-top: 4px; }
+.lbBar > div { height: 100%; border-radius: 999px; transition: width .35s; }
+.lbScore { font-size: 1.5em; font-weight: 700; color: var(--kid, var(--text)); }
+.lbEmpty { text-align: center; padding: 24px; color: var(--text-dim); }
+
+/* ── v1.5: Print-only weekly report ───────────────────────────── */
+.printOnly { display: none; }
+@media print {
+  body > *:not(#printReport) { display: none !important; }
+  .printOnly {
+    display: block !important;
+    color: #000; background: #fff;
+    font-family: -apple-system, system-ui, sans-serif;
+    padding: 24px; font-size: 12pt;
+  }
+  .prHead { text-align: center; margin-bottom: 18px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+  .prHead h1 { margin: 0 0 4px; font-size: 22pt; }
+  .prSub { color: #444; margin: 0; }
+  .prSummary {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 10px; margin: 14px 0 20px;
+  }
+  .prSummary > div { border: 1px solid #888; border-radius: 8px; padding: 10px; text-align: center; }
+  .prSummary strong { display: block; font-size: 18pt; margin-bottom: 4px; }
+  .prSummary span { font-size: 9pt; color: #555; text-transform: uppercase; letter-spacing: .05em; }
+  .printOnly h2 { font-size: 14pt; margin: 18px 0 8px; border-bottom: 1px solid #888; padding-bottom: 4px; }
+  .prTable { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  .prTable th, .prTable td { border: 1px solid #aaa; padding: 6px 8px; text-align: left; }
+  .prTable th { background: #eee; }
+  .prDaily td { text-align: center; }
+  .prDone    { background: #c8f7c5; font-weight: 700; }
+  .prPartial { background: #fff3b0; }
+  .prTaskList { list-style: none; padding: 0; columns: 2; column-gap: 22px; }
+  .prKidBlock { break-inside: avoid; margin-bottom: 12px; }
+  .prKidBlock > strong { display: block; border-bottom: 1px dashed #888; margin-bottom: 4px; }
+  .prKidBlock ul { list-style: none; padding: 0; margin: 0; }
+  .prKidBlock li { display: flex; justify-content: space-between; padding: 2px 0; font-size: 10pt; }
+  .prEmpty { color: #888; font-style: italic; }
+  .prFoot { margin-top: 24px; text-align: center; color: #666; font-size: 9pt; border-top: 1px solid #aaa; padding-top: 8px; }
+  @page { margin: 0.5in; }
+}

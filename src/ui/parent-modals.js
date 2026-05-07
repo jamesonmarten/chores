@@ -3,6 +3,10 @@
 
 import { getTheme, setTheme } from '../utils/theme.js';
 import { sfxOn, animOn, setSfx, setAnim, playSfx } from '../utils/effects.js';
+import {
+  notifySupported, notifyEnabled, notifyHour,
+  enableNotifications, disableNotifications, setNotifyHour,
+} from '../utils/notify.js';
 
 const KID_PRESETS = [
   '#ff5ea8', '#ff8a3d', '#ffc83d', '#35c976',
@@ -301,6 +305,29 @@ export function showSettingsModal(currentPin, onSavePin) {
     </div>
 
     <div class="settingsBlock">
+      <div class="settingsBlockTitle">Morning Reminders</div>
+      ${notifySupported() ? `
+        <label class="toggleRow">
+          <span>🔔 Daily reminder push</span>
+          <input type="checkbox" id="setNotify" ${notifyEnabled() ? 'checked' : ''}>
+          <span class="toggleSwitch"></span>
+        </label>
+        <label class="pmField" style="margin-top:8px">
+          <span>Reminder time</span>
+          <select id="setNotifyHour">
+            ${Array.from({length: 24}, (_, h) => {
+              const lbl = h === 0 ? '12 AM' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h-12} PM`;
+              return `<option value="${h}" ${notifyHour()===h?'selected':''}>${lbl}</option>`;
+            }).join('')}
+          </select>
+        </label>
+        <p class="pmHint" style="margin:6px 0 0;font-size:.85em;color:var(--text-dim)">
+          Reminders fire while the app is open. For background pushes, install the app to your home screen.
+        </p>` : `
+        <p class="pmHint" style="font-size:.9em;color:var(--text-dim)">Notifications aren't available in this browser.</p>`}
+    </div>
+
+    <div class="settingsBlock">
       <div class="settingsBlockTitle">Parent PIN</div>
       <form id="settingsForm" class="pmForm">
         <label>Current PIN <input name="currentPin" type="password" inputmode="numeric" maxlength="4" placeholder="Current PIN"></label>
@@ -325,6 +352,22 @@ export function showSettingsModal(currentPin, onSavePin) {
   document.getElementById('setSfx').onchange  = e => { setSfx(e.target.checked); if (e.target.checked) playSfx('done'); };
   document.getElementById('setAnim').onchange = e => setAnim(e.target.checked);
   document.getElementById('testSfx').onclick  = () => playSfx('reward');
+
+  // Notifications wiring
+  const nBox = document.getElementById('setNotify');
+  const nHour = document.getElementById('setNotifyHour');
+  if (nBox) {
+    nBox.onchange = async (e) => {
+      if (e.target.checked) {
+        const ok = await enableNotifications();
+        e.target.checked = ok;
+        if (!ok) alert('Notifications were blocked. Enable them in your browser settings to receive reminders.');
+      } else {
+        disableNotifications();
+      }
+    };
+  }
+  if (nHour) nHour.onchange = (e) => setNotifyHour(parseInt(e.target.value, 10));
 
   // PIN
   document.getElementById('settingsForm').onsubmit = e => {
