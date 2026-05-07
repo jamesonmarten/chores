@@ -1,27 +1,78 @@
+// filepath: /Users/jamesonmarten/dev/devcabin-ai-chores/family-chores-more/src/ui/calendar.js
 // FILE: src/ui/calendar.js
-import { getPoints, getMaxPoints, kidState } from '../state/store.js';
+import { getPoints, getMaxPoints, kidState, getTasksSorted } from '../state/store.js';
 import { today } from '../utils/date.js';
 
-/**
- * Render the full calendar view: today-focus strip + month or week grid.
- * @param {object} state
- * @param {'month'|'week'} view
- */
-export function renderCalendarView(state, view = 'month') {
+let anchor = new Date();
+let currentView = 'month';
+let _state = null;
+let _onDayClick = null;
+
+const isoOf = (d) => {
+  const yy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yy}-${mm}-${dd}`;
+};
+
+const avatarOf = (kid) =>
+  kid.photo ? `<img class="kidAvImg" src="${kid.photo}" alt="">` : (kid.avatar || kid.initial);
+
+export function renderCalendarView(state, view = 'month', anchorDate) {
+  _state = state;
+  currentView = view;
+  if (anchorDate instanceof Date) anchor = new Date(anchorDate);
+
   renderTodayStrip(state);
-  if (view === 'week') {
-    renderWeekGrid(state);
+  updateHeaderLabel();
+
+  if (view === 'week')      renderWeekGrid(state);
+  else if (view === 'day')  renderDayGrid(state);
+  else                      renderMonthGrid(state);
+}
+
+export function calNav(delta = 1) {
+  if (currentView === 'month') anchor.setMonth(anchor.getMonth() + delta);
+  else if (currentView === 'week') anchor.setDate(anchor.getDate() + 7 * delta);
+  else anchor.setDate(anchor.getDate() + delta);
+  renderCalendarView(_state, currentView);
+}
+
+export function calToday() {
+  anchor = new Date();
+  renderCalendarView(_state, currentView);
+}
+
+export function onCalendarDayClick(fn) { _onDayClick = fn; }
+
+function updateHeaderLabel() {
+  const hdr = document.getElementById('calGridHeader');
+  if (!hdr) return;
+  if (currentView === 'month') {
+    hdr.textContent = anchor.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  } else if (currentView === 'week') {
+    const start = startOfWeek(anchor);
+    const end   = new Date(start); end.setDate(start.getDate() + 6);
+    const sameMonth = start.getMonth() === end.getMonth();
+    hdr.textContent = sameMonth
+      ? `${start.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}–${end.getDate()}, ${end.getFullYear()}`
+      : `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
   } else {
-    renderMonthGrid(state);
+    hdr.textContent = anchor.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
   }
 }
 
-/** "Today's snapshot" strip — one row per kid */
+function startOfWeek(d) {
+  const x = new Date(d);
+  x.setDate(d.getDate() - d.getDay());
+  x.setHours(0,0,0,0);
+  return x;
+}
+
 function renderTodayStrip(state) {
   const el = document.getElementById('calTodayStrip');
   if (!el) return;
   const d = today();
-
   el.innerHTML = state.kids.map(kid => {
     const pts    = getPoints(state, kid.id, d);
     const maxPts = getMaxPoints(state, kid.id);
@@ -32,7 +83,7 @@ function renderTodayStrip(state) {
     const status = pct >= 100 ? '✅ All done!' : `${done}/${tasks.length} tasks · ${pts}/${maxPts} pts`;
     return `
       <div class="calKidStrip" style="--kid:${kid.color}">
-        <span class="calKidAvatar">${kid.avatar || kid.initial}</span>
+        <span class="calKidAvatar">${avatarOf(kid)}</span>
         <div class="calKidStripInfo">
           <strong>${kid.name}</strong>
           <span>${status}</span>
@@ -43,21 +94,18 @@ function renderTodayStrip(state) {
   }).join('');
 }
 
-/** Full month grid — each day cell shows a mini row per kid */
 function renderMonthGrid(state) {
   const el = document.getElementById('calGrid');
   if (!el) return;
   el.className = 'calMonthGrid';
   el.innerHTML = '';
 
-  const now     = new Date();
-  const y       = now.getFullYear();
-  const m       = now.getMonth();
+  const y = anchor.getFullYear();
+  const m = anchor.getMonth();
   const todayIso = today();
   const startDow = new Date(y, m, 1).getDay();
   const daysInMonth = new Date(y, m + 1, 0).getDate();
 
-  // Day-of-week headers
   ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(name => {
     const h = document.createElement('div');
     h.className = 'calDayHead';
@@ -65,7 +113,6 @@ function renderMonthGrid(state) {
     el.appendChild(h);
   });
 
-  // Blank padding cells
   for (let i = 0; i < startDow; i++) {
     el.appendChild(Object.assign(document.createElement('div'), { className: 'calDayBlank' }));
   }
@@ -82,8 +129,9 @@ function renderMonthGrid(state) {
     const timeClass   = iso < todayIso ? 'past' : iso === todayIso ? 'today' : 'future';
     const fillClass   = allComplete ? 'complete' : anyProgress ? 'partial' : 'empty';
 
-    const box = document.createElement('div');
-    box.className = `calDay ${timeClass} ${fillClass}`;
+    const box = document.createElement('button');
+    box.type = 'button';
+    box.className = `calDay clickable ${timeClass} ${fillClass}`;
     box.innerHTML = `
       <div class="calDate">${d}</div>
       <div class="calDayKids">
@@ -98,53 +146,46 @@ function renderMonthGrid(state) {
       </div>
       ${allComplete ? '<div class="calDayComplete">🏆</div>' : ''}
     `;
+    box.onclick = () => drillToDay(new Date(y, m, d));
     el.appendChild(box);
   }
 }
 
-/** Week grid — columns = days of this week, rows = kids */
 function renderWeekGrid(state) {
   const el = document.getElementById('calGrid');
   if (!el) return;
   el.className = 'calWeekGrid';
   el.innerHTML = '';
 
-  const now      = new Date();
   const todayIso = today();
-  const dow      = now.getDay();
-
-  // Build 7-day range (Sun–Sat of current week)
+  const start = startOfWeek(anchor);
   const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(now);
-    d.setDate(now.getDate() - dow + i);
+    const d = new Date(start); d.setDate(start.getDate() + i);
     return {
-      iso:   d.toISOString().slice(0, 10),
+      iso:   isoOf(d),
       label: d.toLocaleDateString('en-US', { weekday: 'short' }),
       num:   d.getDate(),
     };
   });
 
-  // Header row: blank + day columns
   const headerRow = document.createElement('div');
   headerRow.className = 'calWeekHeaderRow';
   headerRow.innerHTML = `<div class="calWeekKidLabel"></div>` +
     weekDays.map(day => `
-      <div class="calWeekDayHead ${day.iso === todayIso ? 'today' : ''}">
+      <button type="button" class="calWeekDayHead clickable ${day.iso === todayIso ? 'today' : ''}" data-day="${day.iso}">
         <span class="calWDow">${day.label}</span>
         <span class="calWNum">${day.num}</span>
-      </div>`).join('');
+      </button>`).join('');
   el.appendChild(headerRow);
 
-  // Kid rows
   state.kids.forEach(kid => {
     const row = document.createElement('div');
     row.className = 'calWeekKidRow';
     row.style.setProperty('--kid', kid.color);
-
     const maxPts = getMaxPoints(state, kid.id);
     row.innerHTML = `
       <div class="calWeekKidLabel">
-        <span class="calWKidAvatar">${kid.avatar || kid.initial}</span>
+        <span class="calWKidAvatar">${avatarOf(kid)}</span>
         <span class="calWKidName">${kid.name}</span>
       </div>` +
       weekDays.map(day => {
@@ -152,11 +193,71 @@ function renderWeekGrid(state) {
         const pct  = maxPts ? Math.min(100, Math.round(pts / maxPts * 100)) : 0;
         const cls  = pct >= 100 ? 'wDone' : pct > 0 ? 'wPartial' : 'wEmpty';
         const isToday = day.iso === todayIso;
-        return `<div class="calWeekCell ${cls} ${isToday ? 'wToday' : ''}">
+        return `<button type="button" class="calWeekCell clickable ${cls} ${isToday ? 'wToday' : ''}" data-day="${day.iso}">
           <div class="calWeekBar" style="height:${pct}%;background:${kid.color}${pct>=100?'':'aa'}"></div>
           <span class="calWeekPct">${pct > 0 ? pct + '%' : ''}</span>
-        </div>`;
+        </button>`;
       }).join('');
     el.appendChild(row);
   });
+
+  el.querySelectorAll('[data-day]').forEach(btn => {
+    btn.onclick = () => drillToDay(new Date(btn.dataset.day + 'T12:00:00'));
+  });
+}
+
+function renderDayGrid(state) {
+  const el = document.getElementById('calGrid');
+  if (!el) return;
+  el.className = 'calDayView';
+  const iso = isoOf(anchor);
+  const isToday = iso === today();
+
+  el.innerHTML = `
+    <div class="calDayHeader">
+      <div class="calDayBig">${anchor.toLocaleDateString('en-US', { weekday: 'long' })}</div>
+      <div class="calDayDate">${anchor.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
+      ${isToday ? '<span class="calDayBadge">Today</span>' : ''}
+    </div>
+    <div class="calDayKidsList">
+      ${state.kids.map(kid => {
+        const ks = kidState(state, kid.id);
+        const tasks = getTasksSorted(state, kid.id);
+        const pts = getPoints(state, kid.id, iso);
+        const maxPts = getMaxPoints(state, kid.id);
+        const pct = maxPts ? Math.min(100, Math.round(pts / maxPts * 100)) : 0;
+        const completed = tasks.filter(t => !!(ks.done || {})[`${iso}_${t.id}`]);
+
+        return `
+          <article class="calDayKidCard" style="--kid:${kid.color}">
+            <header class="calDayKidHead">
+              <span class="calDayKidAv">${avatarOf(kid)}</span>
+              <div class="calDayKidName">
+                <strong>${kid.name}</strong>
+                <span>${pts}/${maxPts} pts · ${completed.length}/${tasks.length} done · ${pct}%</span>
+              </div>
+              <div class="calDayKidBar"><div style="width:${pct}%;background:${kid.color}"></div></div>
+            </header>
+            <ul class="calDayTaskList">
+              ${tasks.length ? tasks.map(t => {
+                const isDone = !!(ks.done || {})[`${iso}_${t.id}`];
+                return `<li class="calDayTask ${isDone ? 'done' : ''}">
+                  <span class="cdtCheck">${isDone ? '✅' : '⬜'}</span>
+                  <span class="cdtEmoji">${t.emoji || '✅'}</span>
+                  <span class="cdtTitle">${t.title}</span>
+                  <span class="cdtPts">+${t.pts}</span>
+                </li>`;
+              }).join('') : '<li class="calDayEmpty">No tasks set up.</li>'}
+            </ul>
+          </article>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+function drillToDay(d) {
+  anchor = d;
+  currentView = 'day';
+  if (_onDayClick) _onDayClick();
+  renderCalendarView(_state, 'day');
 }

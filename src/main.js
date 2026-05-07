@@ -11,7 +11,7 @@ import { today, taskKey } from './utils/date.js';
 import { initModal, showModal, hideModal } from './ui/render.js';
 import { renderParentStats, renderParentKids, renderHistory } from './ui/parent.js';
 import { initKidMode } from './ui/kid.js';
-import { renderCalendarView } from './ui/calendar.js';
+import { renderCalendarView, calNav, calToday, onCalendarDayClick } from './ui/calendar.js';
 import {
   showAddKidModal, showEditKidModal,
   showAddTaskModal, showEditTaskModal,
@@ -32,6 +32,8 @@ import { maybeEnableCouplesMode, couplesEnabled, showHoneyDueModal } from './ui/
 import { showRewardsModal } from './ui/rewards.js';
 import { applyThemeBoot } from './utils/theme.js';
 import { applyEffectsBoot } from './utils/effects.js';
+import { getTheme, setTheme } from './utils/theme.js';
+import { sfxOn, setSfx, playSfx } from './utils/effects.js';
 
 // ── State ────────────────────────────────────────────────────────
 captureReferralFromUrl();
@@ -220,6 +222,7 @@ function renderParent() {
 
   // Push latest events to subscribable calendar feed (debounced)
   schedulePushCal(state);
+  syncQuickToggles();
 }
 
 // Parent header buttons
@@ -229,6 +232,23 @@ document.getElementById('btnAddKid').onclick = () => {
 document.getElementById('btnSettings').onclick = () => {
   showSettingsModal(getPin(), newPin => { setPin(newPin); showModal('PIN Updated', 'Your parent PIN has been changed.', false, '🔒'); });
 };
+document.getElementById('btnQuickTheme').onclick = () => {
+  setTheme(getTheme() === 'light' ? 'dark' : 'light');
+  syncQuickToggles();
+};
+document.getElementById('btnQuickSfx').onclick = () => {
+  const next = !sfxOn();
+  setSfx(next);
+  if (next) playSfx('done');
+  syncQuickToggles();
+};
+
+function syncQuickToggles() {
+  const tBtn = document.getElementById('btnQuickTheme');
+  const sBtn = document.getElementById('btnQuickSfx');
+  if (tBtn) tBtn.textContent = getTheme() === 'light' ? '🌙' : '☀️';
+  if (sBtn) sBtn.textContent = sfxOn() ? '🔊' : '🔇';
+}
 document.getElementById('btnCalendar').onclick = enterCalendarMode;
 document.getElementById('btnCalSync').onclick  = () => showCalendarSyncModal(state);
 document.getElementById('btnHoneyDo').onclick  = () => showHoneyDueModal();
@@ -256,30 +276,23 @@ function enterCalendarMode() {
 }
 
 function renderCalendar() {
-  // Update month label
-  const hdr = document.getElementById('calGridHeader');
-  if (hdr) {
-    const now = new Date();
-    hdr.textContent = calView === 'month'
-      ? now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-      : `Week of ${getWeekStart()}`;
-  }
   renderCalendarView(state, calView);
-  // Sync active button styles
-  document.getElementById('btnCalMonth')?.classList.toggle('active', calView === 'month');
-  document.getElementById('btnCalWeek')?.classList.toggle('active', calView === 'week');
+  ['Month','Week','Day'].forEach(v => {
+    const btn = document.getElementById('btnCal' + v);
+    if (btn) btn.classList.toggle('active', calView === v.toLowerCase());
+  });
 }
 
-function getWeekStart() {
-  const now = new Date();
-  const d   = new Date(now);
-  d.setDate(now.getDate() - now.getDay());
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
+// Reflect the active button when a day cell is clicked (drills into Day view)
+onCalendarDayClick(() => { calView = 'day'; renderCalendar(); });
 
 document.getElementById('btnCalBack').onclick   = () => { showScreen('parentMode'); renderParent(); };
 document.getElementById('btnCalMonth').onclick  = () => { calView = 'month'; renderCalendar(); };
 document.getElementById('btnCalWeek').onclick   = () => { calView = 'week';  renderCalendar(); };
+document.getElementById('btnCalDay').onclick    = () => { calView = 'day';   renderCalendar(); };
+document.getElementById('btnCalPrev').onclick   = () => calNav(-1);
+document.getElementById('btnCalNext').onclick   = () => calNav(1);
+document.getElementById('btnCalToday').onclick  = () => calToday();
 document.getElementById('btnCalSync2').onclick  = () => showCalendarSyncModal(state);
 
 // ── KID SELECTOR ─────────────────────────────────────────────────
@@ -292,7 +305,7 @@ function showKidSelector() {
     btn.className = 'kidSelectBtn';
     btn.style.setProperty('--kid', kid.color);
     btn.innerHTML = `
-      <span class="ksAvatar">${kid.avatar || kid.initial}</span>
+      <span class="ksAvatar">${kid.photo ? `<img class="kidAvImg" src="${kid.photo}" alt="">` : (kid.avatar || kid.initial)}</span>
       <span class="ksName">${kid.name}</span>
       <span class="ksAge">${kid.age || ''}</span>`;
     btn.onclick = () => enterKidMode(kid.id);

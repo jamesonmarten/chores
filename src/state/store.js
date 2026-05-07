@@ -94,9 +94,9 @@ export function checkPin(pin) { return pin === getPin(); }
 export function activatePro(state) { state.isPro = true; save(state); }
 export function isPro(state) { return !!state.isPro; }
 
-export function addKid(state, { name, age, color, avatar, allowance }) {
+export function addKid(state, { name, age, color, avatar, photo, allowance }) {
   const id = name.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now();
-  state.kids.push({ id, name, age, initial: name.trim()[0].toUpperCase(), color, avatar: avatar || '😊', allowance: Number(allowance) || 0 });
+  state.kids.push({ id, name, age, initial: name.trim()[0].toUpperCase(), color, avatar: avatar || '😊', photo: photo || '', allowance: Number(allowance) || 0 });
   state.tasks[id] = [];
   state.kidData[id] = { pointsByDate: {}, done: {}, treats: 0, eggs: 0, allowanceEarned: 0, history: [], streak: 0, bestStreak: 0, totalPoints: 0, level: 1 };
   save(state);

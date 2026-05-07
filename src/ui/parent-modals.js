@@ -31,6 +31,81 @@ function wireColorPickers(form) {
   });
 }
 
+/** Renders an avatar block: live preview (photo OR emoji) + emoji input + photo upload + clear-photo. */
+function avatarBlockHtml(initialEmoji, initialPhoto) {
+  const preview = initialPhoto
+    ? `<img src="${initialPhoto}" class="avPreviewImg" alt="">`
+    : `<span class="avPreviewEmoji">${initialEmoji || '😊'}</span>`;
+  return `
+    <div class="avatarBlock">
+      <div class="avPreview" id="avPreview">${preview}</div>
+      <div class="avControls">
+        <label class="avEmojiLbl">Emoji
+          <input name="avatar" id="avEmojiInput" value="${initialEmoji || '😊'}" maxlength="4">
+        </label>
+        <label class="avPhotoBtn">📷 Upload photo
+          <input type="file" accept="image/*" id="avPhotoInput" hidden>
+        </label>
+        ${initialPhoto ? `<button type="button" class="linkBtn" id="avClearPhoto">Remove photo</button>` : ''}
+        <input type="hidden" name="photo" id="avPhotoData" value="${initialPhoto || ''}">
+      </div>
+    </div>`;
+}
+
+function wireAvatarBlock(form) {
+  const previewEl  = form.querySelector('#avPreview');
+  const emojiInput = form.querySelector('#avEmojiInput');
+  const photoInput = form.querySelector('#avPhotoInput');
+  const photoData  = form.querySelector('#avPhotoData');
+  const clearBtn   = form.querySelector('#avClearPhoto');
+
+  const refresh = () => {
+    if (photoData.value) {
+      previewEl.innerHTML = `<img src="${photoData.value}" class="avPreviewImg" alt="">`;
+    } else {
+      previewEl.innerHTML = `<span class="avPreviewEmoji">${emojiInput.value || '😊'}</span>`;
+    }
+  };
+
+  emojiInput.oninput = refresh;
+  photoInput.onchange = e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const r = new FileReader();
+    r.onload = () => {
+      // Downscale to ~256px square via canvas to keep localStorage sane
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 256;
+        const cv = document.createElement('canvas');
+        const sz = Math.min(img.width, img.height);
+        const sx = (img.width - sz) / 2;
+        const sy = (img.height - sz) / 2;
+        cv.width = MAX; cv.height = MAX;
+        cv.getContext('2d').drawImage(img, sx, sy, sz, sz, 0, 0, MAX, MAX);
+        photoData.value = cv.toDataURL('image/jpeg', 0.85);
+        if (!form.querySelector('#avClearPhoto')) {
+          const btn = document.createElement('button');
+          btn.type = 'button'; btn.className = 'linkBtn'; btn.id = 'avClearPhoto'; btn.textContent = 'Remove photo';
+          btn.onclick = clearPhoto;
+          form.querySelector('.avControls').appendChild(btn);
+        }
+        refresh();
+      };
+      img.src = r.result;
+    };
+    r.readAsDataURL(file);
+  };
+
+  const clearPhoto = () => {
+    photoData.value = '';
+    photoInput.value = '';
+    form.querySelector('#avClearPhoto')?.remove();
+    refresh();
+  };
+  if (clearBtn) clearBtn.onclick = clearPhoto;
+}
+
 function openParentModal(html, onClose) {
   const box = document.getElementById('parentModalBox');
   const modal = document.getElementById('parentModal');
@@ -57,7 +132,7 @@ export function showAddKidModal(onSave) {
     <form id="addKidForm" class="pmForm">
       <label>Name <input name="name" required placeholder="e.g. Emma" maxlength="30"></label>
       <label>Age <input name="age" placeholder="e.g. 8 years" maxlength="20"></label>
-      <label>Avatar (emoji) <input name="avatar" placeholder="😊" maxlength="4"></label>
+      <label>Avatar ${avatarBlockHtml('😊', '')}</label>
       <label>Color ${colorPickerHtml('color', '#35c976')}</label>
       <label>Allowance per full day ($) <input name="allowance" type="number" min="0" step="0.5" value="0"></label>
       <button type="submit" class="btn green">Add Kid</button>
@@ -66,6 +141,7 @@ export function showAddKidModal(onSave) {
   const close = openParentModal(html);
   const form = document.getElementById('addKidForm');
   wireColorPickers(form);
+  wireAvatarBlock(form);
   form.onsubmit = e => {
     e.preventDefault();
     const fd = new FormData(e.target);
@@ -73,6 +149,7 @@ export function showAddKidModal(onSave) {
       name: fd.get('name').trim(),
       age: fd.get('age').trim() || '',
       avatar: fd.get('avatar').trim() || '😊',
+      photo: fd.get('photo') || '',
       color: fd.get('color'),
       allowance: parseFloat(fd.get('allowance')) || 0,
     });
@@ -88,7 +165,7 @@ export function showEditKidModal(kid, onSave) {
     <form id="editKidForm" class="pmForm">
       <label>Name <input name="name" required value="${kid.name}" maxlength="30"></label>
       <label>Age <input name="age" value="${kid.age || ''}" maxlength="20"></label>
-      <label>Avatar (emoji) <input name="avatar" value="${kid.avatar || '😊'}" maxlength="4"></label>
+      <label>Avatar ${avatarBlockHtml(kid.avatar || '😊', kid.photo || '')}</label>
       <label>Color ${colorPickerHtml('color', kid.color)}</label>
       <label>Allowance per full day ($) <input name="allowance" type="number" min="0" step="0.5" value="${kid.allowance || 0}"></label>
       <button type="submit" class="btn green">Save Changes</button>
@@ -97,6 +174,7 @@ export function showEditKidModal(kid, onSave) {
   const close = openParentModal(html);
   const form = document.getElementById('editKidForm');
   wireColorPickers(form);
+  wireAvatarBlock(form);
   form.onsubmit = e => {
     e.preventDefault();
     const fd = new FormData(e.target);
@@ -104,6 +182,7 @@ export function showEditKidModal(kid, onSave) {
       name: fd.get('name').trim(),
       age: fd.get('age').trim(),
       avatar: fd.get('avatar').trim() || kid.avatar,
+      photo: fd.get('photo') || '',
       color: fd.get('color'),
       allowance: parseFloat(fd.get('allowance')) || 0,
     });

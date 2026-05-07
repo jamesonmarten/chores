@@ -40,7 +40,7 @@ function renderKidHeader() {
   const info = document.getElementById('kidHeaderInfo');
   if (!info) return;
   info.innerHTML = `
-    <div class="kidAvatarBig">${kid.avatar || kid.initial}</div>
+    <div class="kidAvatarBig">${kid.photo ? `<img class="kidAvImg" src="${kid.photo}" alt="">` : (kid.avatar || kid.initial)}</div>
     <div class="kidHInfoText">
       <div class="kidHName">${kid.name}</div>
       <div class="kidHLevel">${lvlInfo.emoji} ${lvlInfo.name} · Level ${lvlInfo.level}</div>

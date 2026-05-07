@@ -54,7 +54,7 @@ export function renderParentKids(state, { onEditKid, onRemoveKid, onAddTask, onE
 
     card.innerHTML = `
       <div class="pKidTop">
-        <div class="pKidAvatar" style="background:${kid.color}22;border-color:${kid.color}">${kid.avatar || kid.initial}</div>
+        <div class="pKidAvatar" style="background:${kid.color}22;border-color:${kid.color}">${kid.photo ? `<img class="kidAvImg" src="${kid.photo}" alt="">` : (kid.avatar || kid.initial)}</div>
         <div class="pKidInfo">
           <div class="pKidName">${kid.name}</div>
           <div class="pKidAge">${kid.age}</div>
