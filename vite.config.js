@@ -14,6 +14,7 @@ export default defineConfig({
         landing: resolve(__dirname, 'landing.html'),
         demo:    resolve(__dirname, 'demo.html'),
         compare: resolve(__dirname, 'compare.html'),
+        snapshot:resolve(__dirname, 'snapshot.html'),
       },
     },
   },

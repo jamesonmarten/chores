@@ -4,6 +4,7 @@ import {
   kidState, getPoints, setPoints, getMaxPoints, getLevel,
   logHistory, updateStreak, save,
   getTasksSorted, TIME_PERIODS, currentPeriod,
+  rotationOwnerOn,
 } from '../state/store.js';
 import { launchConfetti, rollEgg } from '../utils/helpers.js';
 import { EGGS } from '../data/eggs.js';
@@ -74,7 +75,12 @@ function renderKidTasks() {
   const kid = _state.kids.find(k => k.id === _activeKidId);
   if (!kid) return;
   const ks = kidState(_state, kid.id);
-  const tasks = getTasksSorted(_state, kid.id);
+  const iso = today();
+  // Hide rotating tasks that aren't this kid's turn today.
+  const tasks = getTasksSorted(_state, kid.id).filter(t => {
+    const owner = rotationOwnerOn(t, iso);
+    return !owner || owner === kid.id;
+  });
   const main = document.getElementById('kidMain');
   if (!main) return;
 

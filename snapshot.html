@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+  <meta name="theme-color" content="#020617">
+  <title>Family Snapshot</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 24px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background: linear-gradient(135deg, #020617 0%, #0a1228 100%);
+      color: #fff; min-height: 100vh;
+    }
+    .wrap { max-width: 720px; margin: 0 auto; }
+    .head { text-align: center; margin-bottom: 24px; }
+    .head h1 { margin: 0; font-size: 1.6em; }
+    .head p { margin: 4px 0 0; color: rgba(255,255,255,.65); }
+    .updated { font-size: .85em; color: rgba(255,255,255,.5); margin-top: 4px; }
+    .kid {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1);
+      border-left: 4px solid var(--kid, #54b8ff);
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin-bottom: 12px;
+    }
+    .row { display: flex; align-items: center; gap: 14px; }
+    .av {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: rgba(255,255,255,.1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6em; overflow: hidden;
+    }
+    .av img { width: 100%; height: 100%; object-fit: cover; }
+    .name { font-size: 1.2em; font-weight: 700; }
+    .meta { font-size: .9em; color: rgba(255,255,255,.7); }
+    .pct { margin-left: auto; font-size: 1.8em; font-weight: 800; color: var(--kid, #54b8ff); }
+    .bar { height: 8px; background: rgba(255,255,255,.12); border-radius: 999px; overflow: hidden; margin-top: 10px; }
+    .bar > div { height: 100%; transition: width .4s; }
+    .clap {
+      display: block; width: 100%; margin-top: 24px;
+      padding: 18px; font-size: 1.2em; font-weight: 700;
+      background: linear-gradient(135deg, #ffb13d, #ff8a3d);
+      color: #1a1a1a; border: none; border-radius: 14px; cursor: pointer;
+    }
+    .clap:disabled { opacity: .6; cursor: default; }
+    .err, .empty {
+      text-align: center; padding: 60px 20px; color: rgba(255,255,255,.6);
+    }
+    .err strong { color: #ff8a8a; }
+    .footer {
+      text-align: center; margin-top: 30px;
+      color: rgba(255,255,255,.4); font-size: .85em;
+    }
+    .footer a { color: rgba(255,255,255,.65); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head">
+      <h1>👵 Family Snapshot</h1>
+      <p id="famName">Loading…</p>
+      <div class="updated" id="updated"></div>
+    </div>
+    <div id="content"></div>
+    <div class="footer">
+      <a href="/">Family Chores &amp; More</a>
+    </div>
+  </div>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const token  = params.get('t') || '';
+    const content = document.getElementById('content');
+
+    async function load() {
+      if (!token) { renderError('No share token.'); return; }
+      try {
+        const r = await fetch('/api/snapshot?token=' + encodeURIComponent(token));
+        if (!r.ok) { renderError(r.status === 404 ? 'This link is no longer active.' : 'Could not load snapshot.'); return; }
+        const data = await r.json();
+        render(data);
+      } catch (e) { renderError(e.message); }
+    }
+
+    function renderError(msg) {
+      document.getElementById('famName').textContent = '';
+      content.innerHTML = '<div class="err"><strong>' + esc(msg) + '</strong></div>';
+    }
+
+    function esc(s) { return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    function render(rec) {
+      const snap = rec.snapshot || {};
+      document.getElementById('famName').textContent = snap.familyName || 'Today at a glance';
+      document.getElementById('updated').textContent =
+        'Updated ' + new Date(rec.updatedAt || Date.now()).toLocaleString();
+      const kids = snap.kids || [];
+      if (!kids.length) {
+        content.innerHTML = '<div class="empty">No kids in this snapshot yet.</div>';
+        return;
+      }
+      content.innerHTML = kids.map(k => `
+        <div class="kid" style="--kid:${esc(k.color || '#54b8ff')}">
+          <div class="row">
+            <div class="av">${k.photo ? `<img src="${esc(k.photo)}" alt="">` : esc(k.avatar || '😊')}</div>
+            <div>
+              <div class="name">${esc(k.name)}</div>
+              <div class="meta">${k.pts}/${k.max} pts · ${k.done}/${k.total} done${k.streak ? ' · 🔥 ' + k.streak : ''}</div>
+            </div>
+            <div class="pct">${k.pct}%</div>
+          </div>
+          <div class="bar"><div style="width:${k.pct}%;background:${esc(k.color||'#54b8ff')}"></div></div>
+        </div>`).join('') +
+        `<button class="clap" id="clap">👏 Send the kids a clap!</button>`;
+
+      const btn = document.getElementById('clap');
+      btn.onclick = () => {
+        btn.textContent = '✨ Sent! Thanks for cheering them on.';
+        btn.disabled = true;
+        // Best-effort: try Web Share API as a quick "send"
+        try { navigator.share?.({ title: 'Way to go!', text: 'Grandma is proud! 👏' }); } catch {}
+      };
+    }
+
+    load();
+  </script>
+</body>
+</html>

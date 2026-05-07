@@ -3,6 +3,7 @@ import { today } from '../utils/date.js';
 import {
   kidState, getPoints, getMaxPoints, getLevel, isPro,
   getTasksSorted, reorderTasks, rebalancePoints, save,
+  rotationOwnerOn,
 } from '../state/store.js';
 import { launchConfetti } from '../utils/helpers.js';
 
@@ -89,11 +90,17 @@ export function renderParentKids(state, { onEditKid, onRemoveKid, onAddTask, onE
           const doneKey = today() + '_' + t.id;
           const isDone = !!(ks.done || {})[doneKey];
           const tod = TOD_META[t.timeOfDay || 'any'];
-          return `<div class="pTaskRow ${isDone ? 'done' : ''}" draggable="true" data-task-id="${t.id}">
+          const ownerId = rotationOwnerOn(t, today());
+          const owner = ownerId ? state.kids.find(k => k.id === ownerId) : null;
+          const rotBadge = t.rotation
+            ? `<span class="pTaskRotation" title="Auto-rotates between ${t.rotation.kidIds.length} kids${owner ? ' · today: ' + owner.name : ''}" style="${owner ? `--kid:${owner.color}` : ''}">🔁${owner ? ' ' + (owner.avatar || owner.initial || owner.name[0]) : ''}</span>`
+            : '';
+          return `<div class="pTaskRow ${isDone ? 'done' : ''}${t.rotation ? ' rotating' : ''}" draggable="true" data-task-id="${t.id}">
             <span class="pDragHandle" title="Drag to reorder">⋮⋮</span>
             <span class="pTaskCheck" data-mark="${kid.id}" data-task="${t.id}" style="cursor:pointer">${isDone ? '✅' : '⬜'}</span>
             <span class="pTaskEmoji">${t.emoji || '✅'}</span>
             <span class="pTaskTitle">${t.title}</span>
+            ${rotBadge}
             <span class="pTodBadge" title="${tod.label}">${tod.emoji}</span>
             ${t.timerSec ? `<span class="pTaskTimer" title="Timer">⏱${t.timerSec}s</span>` : ''}
             ${t.videoUrl ? `<span class="pTaskTimer" title="Has instruction video">🎥</span>` : ''}

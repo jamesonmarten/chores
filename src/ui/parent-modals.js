@@ -176,6 +176,70 @@ function wireVoiceBlock(form) {
   };
 }
 
+/**
+ * Auto-rotation block: lets the parent select 2+ kids who share this task on
+ * a daily rotation. Stores selection as a JSON-encoded `rotation` hidden field.
+ */
+function rotationBlockHtml(allKids = [], currentRotation = null, ownerKidId = '') {
+  if (!allKids || allKids.length < 2) {
+    return `<div class="rotationBlock"><span class="pmHint">🔁 Add 2+ kids to enable auto-rotating chores.</span></div>`;
+  }
+  const sel = new Set((currentRotation?.kidIds) || []);
+  const startDate = currentRotation?.startDate || new Date().toISOString().slice(0,10);
+  const enabled = sel.size >= 2;
+  return `
+    <div class="rotationBlock" id="rotationBlock">
+      <input type="hidden" name="rotation" id="rotationData" value='${enabled ? JSON.stringify({ kidIds: [...sel], startDate }) : ''}'>
+      <label class="toggleRow rotationToggle">
+        <span>🔁 Auto-rotate this chore between kids</span>
+        <input type="checkbox" id="rotationEnable" ${enabled ? 'checked' : ''}>
+        <span class="toggleSwitch"></span>
+      </label>
+      <div class="rotationKidsRow" id="rotationKidsRow" ${enabled ? '' : 'hidden'}>
+        ${allKids.map(k => `
+          <label class="rotationKidChip" style="--kid:${k.color}">
+            <input type="checkbox" data-rot-kid="${k.id}" ${sel.has(k.id) ? 'checked' : ''}>
+            <span class="rkAvatar">${k.avatar || k.initial || '👤'}</span>
+            <span class="rkName">${k.name}</span>
+          </label>`).join('')}
+      </div>
+      <label class="pmField rotationStartRow" id="rotationStartRow" ${enabled ? '' : 'hidden'}>
+        <span>Rotation start date</span>
+        <input type="date" id="rotationStart" value="${startDate}">
+      </label>
+      <p class="pmHint" id="rotationHint" ${enabled ? '' : 'hidden'}>Each selected kid gets this chore every ${sel.size || 'N'} days, starting from the date above.</p>
+    </div>`;
+}
+
+function wireRotationBlock(form) {
+  const block = form.querySelector('#rotationBlock');
+  if (!block) return;
+  const data    = block.querySelector('#rotationData');
+  const toggle  = block.querySelector('#rotationEnable');
+  const kidsRow = block.querySelector('#rotationKidsRow');
+  const startEl = block.querySelector('#rotationStart');
+  const startRw = block.querySelector('#rotationStartRow');
+  const hintEl  = block.querySelector('#rotationHint');
+  if (!toggle) return;
+
+  const sync = () => {
+    const on = toggle.checked;
+    if (kidsRow) kidsRow.hidden = !on;
+    if (startRw) startRw.hidden = !on;
+    if (hintEl)  hintEl.hidden  = !on;
+    if (!on) { data.value = ''; return; }
+    const kidIds = Array.from(block.querySelectorAll('[data-rot-kid]'))
+      .filter(c => c.checked).map(c => c.dataset.rotKid);
+    if (kidIds.length < 2) { data.value = ''; return; }
+    data.value = JSON.stringify({ kidIds, startDate: startEl?.value || new Date().toISOString().slice(0,10) });
+    if (hintEl) hintEl.textContent = `Each selected kid gets this chore every ${kidIds.length} days, starting from the date above.`;
+  };
+
+  toggle.onchange = sync;
+  block.querySelectorAll('[data-rot-kid]').forEach(c => c.onchange = sync);
+  if (startEl) startEl.onchange = sync;
+}
+
 function openParentModal(html, onClose) {
   const box = document.getElementById('parentModalBox');
   const modal = document.getElementById('parentModal');
@@ -261,7 +325,9 @@ export function showEditKidModal(kid, onSave) {
 }
 
 /** Show Add Task modal */
-export function showAddTaskModal(kidName, onSave) {
+export function showAddTaskModal(kidName, allKids, onSave) {
+  // Back-compat: old signature was (kidName, onSave)
+  if (typeof allKids === 'function') { onSave = allKids; allKids = []; }
   const html = `
     <button class="pmClose modalCloseX">✕</button>
     <h2 class="pmTitle">Add Task for ${kidName}</h2>
@@ -281,15 +347,19 @@ export function showAddTaskModal(kidName, onSave) {
       <label>Timer (seconds, 0 = none) <input name="timerSec" type="number" min="0" max="3600" value="0"></label>
       <label>Instruction video URL (YouTube or .mp4, optional) <input name="videoUrl" type="url" placeholder="https://…"></label>
       <label>🎙 Voice reminder (parent's voice, plays when kid taps timer) ${voiceBlockHtml('')}</label>
+      ${rotationBlockHtml(allKids, null)}
       <button type="submit" class="btn green">Add Task</button>
     </form>`;
 
   const close = openParentModal(html);
   const form = document.getElementById('addTaskForm');
   wireVoiceBlock(form);
+  wireRotationBlock(form);
   form.onsubmit = e => {
     e.preventDefault();
     const fd = new FormData(e.target);
+    let rotation = null;
+    try { const raw = fd.get('rotation'); if (raw) rotation = JSON.parse(raw); } catch {}
     onSave({
       title: fd.get('title').trim(),
       emoji: fd.get('emoji').trim() || '✅',
@@ -299,13 +369,16 @@ export function showAddTaskModal(kidName, onSave) {
       timerSec: parseInt(fd.get('timerSec')) || 0,
       videoUrl: (fd.get('videoUrl') || '').trim(),
       voiceUrl: fd.get('voiceUrl') || '',
+      rotation,
     });
     close();
   };
 }
 
 /** Show Edit Task modal */
-export function showEditTaskModal(task, kidName, onSave) {
+export function showEditTaskModal(task, kidName, allKids, onSave) {
+  // Back-compat: old signature was (task, kidName, onSave)
+  if (typeof allKids === 'function') { onSave = allKids; allKids = []; }
   const html = `
     <button class="pmClose modalCloseX">✕</button>
     <h2 class="pmTitle">Edit Task for ${kidName}</h2>
@@ -325,15 +398,19 @@ export function showEditTaskModal(task, kidName, onSave) {
       <label>Timer (seconds, 0 = none) <input name="timerSec" type="number" min="0" max="3600" value="${task.timerSec || 0}"></label>
       <label>Instruction video URL <input name="videoUrl" type="url" value="${task.videoUrl || ''}" placeholder="https://…"></label>
       <label>🎙 Voice reminder ${voiceBlockHtml(task.voiceUrl || '')}</label>
+      ${rotationBlockHtml(allKids, task.rotation || null)}
       <button type="submit" class="btn green">Save Changes</button>
     </form>`;
 
   const close = openParentModal(html);
   const form = document.getElementById('editTaskForm');
   wireVoiceBlock(form);
+  wireRotationBlock(form);
   form.onsubmit = e => {
     e.preventDefault();
     const fd = new FormData(e.target);
+    let rotation = null;
+    try { const raw = fd.get('rotation'); if (raw) rotation = JSON.parse(raw); } catch {}
     onSave({
       title: fd.get('title').trim(),
       emoji: fd.get('emoji').trim() || task.emoji,
@@ -343,6 +420,7 @@ export function showEditTaskModal(task, kidName, onSave) {
       timerSec: parseInt(fd.get('timerSec')) || 0,
       videoUrl: (fd.get('videoUrl') || '').trim(),
       voiceUrl: fd.get('voiceUrl') || '',
+      rotation,
     });
     close();
   };

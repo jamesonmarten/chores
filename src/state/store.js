@@ -120,10 +120,10 @@ export function updateKid(state, kidId, updates) {
   save(state);
 }
 
-export function addTask(state, kidId, { title, pts, helper, emoji, timeOfDay, timerSec, videoUrl, voiceUrl }) {
+export function addTask(state, kidId, { title, pts, helper, emoji, timeOfDay, timerSec, videoUrl, voiceUrl, rotation }) {
   state.tasks[kidId] = state.tasks[kidId] || [];
   const order = state.tasks[kidId].length;
-  state.tasks[kidId].push({
+  const task = {
     id: title.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now(),
     title, pts: Number(pts) || 10,
     helper: helper || 'Tap when done',
@@ -133,7 +133,14 @@ export function addTask(state, kidId, { title, pts, helper, emoji, timeOfDay, ti
     timerSec: Number(timerSec) || 0,
     videoUrl: (videoUrl || '').trim(),
     voiceUrl: voiceUrl || '',
-  });
+  };
+  if (rotation && Array.isArray(rotation.kidIds) && rotation.kidIds.length >= 2) {
+    task.rotation = {
+      kidIds: rotation.kidIds.slice(),
+      startDate: rotation.startDate || new Date().toISOString().slice(0, 10),
+    };
+  }
+  state.tasks[kidId].push(task);
   save(state);
 }
 
@@ -144,7 +151,20 @@ export function removeTask(state, kidId, taskId) {
 
 export function updateTask(state, kidId, taskId, updates) {
   const task = (state.tasks[kidId] || []).find(t => t.id === taskId);
-  if (task) Object.assign(task, updates);
+  if (!task) return;
+  // Special-case rotation: undefined means "leave alone"; null/empty means clear; valid object replaces.
+  if ('rotation' in updates) {
+    const r = updates.rotation;
+    if (r && Array.isArray(r.kidIds) && r.kidIds.length >= 2) {
+      task.rotation = { kidIds: r.kidIds.slice(), startDate: r.startDate || new Date().toISOString().slice(0,10) };
+    } else {
+      delete task.rotation;
+    }
+    const { rotation: _ignore, ...rest } = updates;
+    Object.assign(task, rest);
+  } else {
+    Object.assign(task, updates);
+  }
   save(state);
 }
 
@@ -367,5 +387,35 @@ export function addNote(state, { text, emoji, color, hours }) {
 }
 export function removeNote(state, noteId) {
   state.notes = (state.notes || []).filter(n => n.id !== noteId);
+  save(state);
+}
+
+// ── Auto-rotating chores ────────────────────────────────────────────────
+// Each task may carry: rotation: { kidIds: string[], startDate?: 'YYYY-MM-DD' }
+// We resolve which kid "owns" the task on a given date by counting days from
+// startDate (or task creation epoch) modulo kidIds.length. The task is duplicated
+// (in-memory only) onto the owning kid for display purposes.
+
+function _epochDay(iso) {
+  const d = new Date(iso + 'T12:00:00');
+  return Math.floor(d.getTime() / 86400000);
+}
+
+/** Returns the kid id that owns this rotating task on `iso`, or null if not rotated. */
+export function rotationOwnerOn(task, iso) {
+  const r = task?.rotation;
+  if (!r || !Array.isArray(r.kidIds) || r.kidIds.length < 2) return null;
+  const start = r.startDate || iso;
+  const offset = _epochDay(iso) - _epochDay(start);
+  const idx = ((offset % r.kidIds.length) + r.kidIds.length) % r.kidIds.length;
+  return r.kidIds[idx];
+}
+
+/** Set/clear rotation on a task. */
+export function setTaskRotation(state, kidId, taskId, rotation) {
+  const t = (state.tasks[kidId] || []).find(x => x.id === taskId);
+  if (!t) return;
+  if (!rotation || !rotation.kidIds?.length) delete t.rotation;
+  else t.rotation = { kidIds: rotation.kidIds.slice(), startDate: rotation.startDate || new Date().toISOString().slice(0,10) };
   save(state);
 }

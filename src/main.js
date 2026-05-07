@@ -35,6 +35,7 @@ import { showLeaderboardModal } from './ui/leaderboard.js';
 import { showWeeklyReport } from './ui/report.js';
 import { enterFrameMode } from './ui/frame.js';
 import { renderNotesStrip } from './ui/notes.js';
+import { showShareModal, pushSnapshot } from './ui/share.js';
 import { applyThemeBoot } from './utils/theme.js';
 import { applyEffectsBoot } from './utils/effects.js';
 import { getTheme, setTheme } from './utils/theme.js';
@@ -153,12 +154,12 @@ function renderParent() {
     },
     onAddTask: (kidId) => {
       const kid = state.kids.find(k => k.id === kidId);
-      showAddTaskModal(kid?.name || 'Kid', task => { addTask(state, kidId, task); renderParent(); });
+      showAddTaskModal(kid?.name || 'Kid', state.kids, task => { addTask(state, kidId, task); renderParent(); });
     },
     onEditTask: (kidId, taskId) => {
       const task = (state.tasks[kidId] || []).find(t => t.id === taskId);
       const kid = state.kids.find(k => k.id === kidId);
-      if (task) showEditTaskModal(task, kid?.name || 'Kid', updates => { updateTask(state, kidId, taskId, updates); renderParent(); });
+      if (task) showEditTaskModal(task, kid?.name || 'Kid', state.kids, updates => { updateTask(state, kidId, taskId, updates); renderParent(); });
     },
     onRemoveTask: (kidId, taskId) => {
       const task = (state.tasks[kidId] || []).find(t => t.id === taskId);
@@ -236,6 +237,19 @@ function renderParent() {
     editable: true,
     onChange: () => renderParent(),
   });
+
+  // Auto-push snapshot if a share token already exists (debounced).
+  scheduleSnapshotPush();
+}
+
+// Debounced snapshot push — only fires when the parent has previously generated a share link.
+let _snapTimer = null;
+function scheduleSnapshotPush() {
+  if (!localStorage.getItem('familyChoresShareToken')) return;
+  if (_snapTimer) clearTimeout(_snapTimer);
+  _snapTimer = setTimeout(() => {
+    pushSnapshot(state).catch(err => console.warn('snapshot push failed:', err.message));
+  }, 1500);
 }
 
 // Parent header buttons
@@ -270,6 +284,7 @@ document.getElementById('btnRoutines').onclick = () => showRoutinesModal(state, 
 document.getElementById('btnLeaderboard').onclick = () => showLeaderboardModal(state);
 document.getElementById('btnWeeklyReport').onclick = () => showWeeklyReport(state);
 document.getElementById('btnFrameMode').onclick = () => enterFrameMode(state);
+document.getElementById('btnGrandma').onclick = () => showShareModal(state);
 document.getElementById('btnSwitchToKid').onclick = () => {
   if (state.kids.length === 1) {
     enterKidMode(state.kids[0].id);
