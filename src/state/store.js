@@ -38,7 +38,7 @@ const DEFAULT_TASKS = {
 function fresh() {
   const tasks = {};
   Object.entries(DEFAULT_TASKS).forEach(([kidId, list]) => {
-    tasks[kidId] = list.map((t, i) => ({ ...t, order: i, timeOfDay: 'any', timerSec: 0, videoUrl: '' }));
+    tasks[kidId] = list.map((t, i) => ({ ...t, order: i, timeOfDay: 'any', timerSec: 0, videoUrl: '', voiceUrl: '' }));
   });
   return {
     isPro: false,
@@ -46,6 +46,8 @@ function fresh() {
     kids: DEFAULT_KIDS,
     tasks,
     rewards: {}, // { kidId: Reward[] }
+    routines: {}, // { kidId: Routine[] }
+    notes: [],   // FamilyNote[]
     kidData: Object.fromEntries(
       DEFAULT_KIDS.map(k => [k.id, {
         pointsByDate: {}, done: {}, treats: 0, eggs: 0,
@@ -58,12 +60,15 @@ function fresh() {
 /** Migrate older saved state to the latest schema. Mutates in place. */
 function migrate(state) {
   state.rewards = state.rewards || {};
+  state.routines = state.routines || {};
+  state.notes = state.notes || [];
   Object.values(state.tasks || {}).forEach(list => {
     list.forEach((t, i) => {
       if (typeof t.order     !== 'number') t.order = i;
       if (typeof t.timeOfDay !== 'string') t.timeOfDay = 'any';
       if (typeof t.timerSec  !== 'number') t.timerSec = 0;
       if (typeof t.videoUrl  !== 'string') t.videoUrl = '';
+      if (typeof t.voiceUrl  !== 'string') t.voiceUrl = '';
     });
   });
   return state;
@@ -115,7 +120,7 @@ export function updateKid(state, kidId, updates) {
   save(state);
 }
 
-export function addTask(state, kidId, { title, pts, helper, emoji, timeOfDay, timerSec, videoUrl }) {
+export function addTask(state, kidId, { title, pts, helper, emoji, timeOfDay, timerSec, videoUrl, voiceUrl }) {
   state.tasks[kidId] = state.tasks[kidId] || [];
   const order = state.tasks[kidId].length;
   state.tasks[kidId].push({
@@ -127,6 +132,7 @@ export function addTask(state, kidId, { title, pts, helper, emoji, timeOfDay, ti
     timeOfDay: timeOfDay || 'any',
     timerSec: Number(timerSec) || 0,
     videoUrl: (videoUrl || '').trim(),
+    voiceUrl: voiceUrl || '',
   });
   save(state);
 }
@@ -303,4 +309,63 @@ export function claimReward(state, kidId, rewardId) {
   logHistory(state, kidId, { message: `Claimed reward: "${r.title}" (-${target} pts)`, pts: -target });
   save(state);
   return true;
+}
+
+// ── Routines (chore chains) ────────────────────────────────────────────────
+/**
+ * @typedef {{ id:string, name:string, emoji:string, taskIds:string[],
+ *   stepSeconds:number, active:boolean }} Routine
+ */
+export function getRoutines(state, kidId) {
+  state.routines = state.routines || {};
+  return state.routines[kidId] || [];
+}
+export function addRoutine(state, kidId, { name, emoji, taskIds, stepSeconds }) {
+  state.routines = state.routines || {};
+  state.routines[kidId] = state.routines[kidId] || [];
+  state.routines[kidId].push({
+    id: 'rt_' + Math.random().toString(36).slice(2, 8) + Date.now().toString(36),
+    name: name || 'Routine',
+    emoji: emoji || '🌟',
+    taskIds: Array.isArray(taskIds) ? taskIds : [],
+    stepSeconds: Number(stepSeconds) || 60,
+    active: true,
+  });
+  save(state);
+}
+export function updateRoutine(state, kidId, routineId, updates) {
+  const r = (state.routines?.[kidId] || []).find(x => x.id === routineId);
+  if (r) Object.assign(r, updates);
+  save(state);
+}
+export function removeRoutine(state, kidId, routineId) {
+  if (!state.routines?.[kidId]) return;
+  state.routines[kidId] = state.routines[kidId].filter(r => r.id !== routineId);
+  save(state);
+}
+
+// ── Family notes (sticky announcements) ───────────────────────────────────
+/** @typedef {{ id:string, text:string, emoji:string, color:string, expiresAt:number, createdAt:number }} FamilyNote */
+export function getNotes(state) {
+  state.notes = state.notes || [];
+  const now = Date.now();
+  state.notes = state.notes.filter(n => !n.expiresAt || n.expiresAt > now);
+  return state.notes;
+}
+export function addNote(state, { text, emoji, color, hours }) {
+  state.notes = state.notes || [];
+  const h = Number(hours) || 24;
+  state.notes.push({
+    id: 'n_' + Math.random().toString(36).slice(2, 8) + Date.now().toString(36),
+    text: String(text || '').slice(0, 280),
+    emoji: emoji || '��',
+    color: color || '#ffd93d',
+    createdAt: Date.now(),
+    expiresAt: h > 0 ? Date.now() + h * 3600 * 1000 : 0,
+  });
+  save(state);
+}
+export function removeNote(state, noteId) {
+  state.notes = (state.notes || []).filter(n => n.id !== noteId);
+  save(state);
 }

@@ -11,6 +11,10 @@ import { showModal } from './render.js';
 import { showTaskTimer, showTaskVideo } from './task-extras.js';
 import { renderRewardChipsForKid } from './rewards.js';
 import { playSfx } from '../utils/effects.js';
+import { playVoice } from '../utils/voice.js';
+import { renderNotesStrip } from './notes.js';
+import { getRoutines } from '../state/store.js';
+import { runRoutine } from './routines.js';
 
 let _activeKidId = null;
 let _state = null;
@@ -91,6 +95,8 @@ function renderKidTasks() {
       <div class="celebText">Amazing work, ${kid.name}!</div>
       <div class="celebSub">You completed all your chores today!</div>
     </div>` : ''}
+    <div id="kidNotesStrip" class="notesStripWrap"></div>
+    <div id="kidRoutinesBar"></div>
     <div id="kidRewardsContainer"></div>
     <div id="kidGroupsWrap"></div>
     <div class="kidLevelBar">
@@ -110,6 +116,34 @@ function renderKidTasks() {
 
   // Reward chips
   renderRewardChipsForKid(_state, kid.id, main.querySelector('#kidRewardsContainer'));
+
+  // Family notes (read-only on kid screen)
+  renderNotesStrip(_state, main.querySelector('#kidNotesStrip'), { editable: false });
+
+  // Routine launcher chips for this kid
+  const routines = getRoutines(_state, kid.id);
+  const rtBar = main.querySelector('#kidRoutinesBar');
+  if (routines.length) {
+    rtBar.innerHTML = `
+      <div class="kidRoutinesBar">
+        <div class="kidRoutinesTitle">🌟 Routines</div>
+        <div class="kidRoutinesList">
+          ${routines.map(r => `
+            <button class="kidRoutineChip" data-routine="${r.id}" style="--kid:${kid.color}">
+              <span class="krEmoji">${r.emoji}</span>
+              <span class="krName">${r.name}</span>
+              <span class="krSteps">${r.taskIds.length} steps</span>
+            </button>`).join('')}
+        </div>
+      </div>`;
+    rtBar.querySelectorAll('[data-routine]').forEach(b => b.onclick = () => {
+      runRoutine(_state, kid.id, b.dataset.routine, () => {
+        renderKidHeader();
+        renderKidTasks();
+        if (_onUpdate) _onUpdate();
+      });
+    });
+  }
 
   // Render grouped task sections
   const wrap = main.querySelector('#kidGroupsWrap');
@@ -138,8 +172,9 @@ function renderKidTasks() {
         <div class="choreHelper">${isDone ? '✓ Done!' : t.helper}</div>
         <div class="chorePts ${isDone ? 'done' : ''}">+${t.pts}</div>
         ${isDone ? '<div class="choreCheck">✓</div>' : ''}
-        ${(t.timerSec > 0 || t.videoUrl) && !isDone ? `
+        ${(t.timerSec > 0 || t.videoUrl || t.voiceUrl) && !isDone ? `
           <div class="choreExtras">
+            ${t.voiceUrl ? `<button class="choreExtraBtn" data-voice="${t.id}" title="Play parent's voice">🔊</button>` : ''}
             ${t.videoUrl ? `<button class="choreExtraBtn" data-video="${t.id}" title="Watch instructions">🎥</button>` : ''}
             ${t.timerSec > 0 ? `<button class="choreExtraBtn" data-timer="${t.id}" title="Start ${t.timerSec}s timer">⏱ ${t.timerSec}s</button>` : ''}
           </div>` : ''}
@@ -189,6 +224,11 @@ function renderKidTasks() {
     e.stopPropagation();
     const t = tasks.find(x => x.id === b.dataset.timer);
     if (t) showTaskTimer(t, () => toggleChore(_activeKidId, t));
+  });
+  wrap.querySelectorAll('[data-voice]').forEach(b => b.onclick = (e) => {
+    e.stopPropagation();
+    const t = tasks.find(x => x.id === b.dataset.voice);
+    if (t?.voiceUrl) playVoice(t.voiceUrl);
   });
 }
 

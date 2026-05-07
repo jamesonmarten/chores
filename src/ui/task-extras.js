@@ -6,6 +6,7 @@
 // Both build their own DOM (do NOT reuse #parentModal so they can sit above the kid view).
 
 import { playSfx } from '../utils/effects.js';
+import { playVoice } from '../utils/voice.js';
 
 let timerInterval = null;
 
@@ -68,6 +69,10 @@ export function showTaskTimer(task, onComplete) {
 
   if (timerInterval) clearInterval(timerInterval);
 
+  // Play parent's voice reminder once at the start, if recorded
+  let voiceAudio = null;
+  if (task.voiceUrl) voiceAudio = playVoice(task.voiceUrl);
+
   const tick = () => {
     clockEl.textContent = fmt(remaining);
     ringEl.setAttribute('stroke-dashoffset', String(circ * (1 - remaining / total)));
@@ -86,6 +91,7 @@ export function showTaskTimer(task, onComplete) {
 
   const finish = (auto) => {
     clearInterval(timerInterval);
+    if (voiceAudio) { try { voiceAudio.pause(); } catch {} }
     closeOverlay(el);
     if (auto) onComplete?.();
   };

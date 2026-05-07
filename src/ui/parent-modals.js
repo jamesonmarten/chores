@@ -7,6 +7,7 @@ import {
   notifySupported, notifyEnabled, notifyHour,
   enableNotifications, disableNotifications, setNotifyHour,
 } from '../utils/notify.js';
+import { voiceSupported, startRecording, stopRecording, cancelRecording, playVoice } from '../utils/voice.js';
 
 const KID_PRESETS = [
   '#ff5ea8', '#ff8a3d', '#ffc83d', '#35c976',
@@ -35,7 +36,6 @@ function wireColorPickers(form) {
   });
 }
 
-/** Renders an avatar block: live preview (photo OR emoji) + emoji input + photo upload + clear-photo. */
 function avatarBlockHtml(initialEmoji, initialPhoto) {
   const preview = initialPhoto
     ? `<img src="${initialPhoto}" class="avPreviewImg" alt="">`
@@ -108,6 +108,72 @@ function wireAvatarBlock(form) {
     refresh();
   };
   if (clearBtn) clearBtn.onclick = clearPhoto;
+}
+
+/** Voice recorder block for tasks. Adds a hidden `voiceUrl` field to the form. */
+function voiceBlockHtml(initialUrl = '') {
+  if (!voiceSupported()) {
+    return `<div class="voiceBlock"><span class="pmHint">🎙 Voice reminders not supported in this browser.</span></div>`;
+  }
+  return `
+    <div class="voiceBlock" id="voiceBlock">
+      <input type="hidden" name="voiceUrl" id="voiceData" value="${initialUrl}">
+      <div class="voiceRow">
+        <button type="button" class="smallBtn" id="voiceRec">🎙 Record</button>
+        <button type="button" class="smallBtn" id="voicePlay" ${initialUrl ? '' : 'disabled'}>▶ Play</button>
+        <button type="button" class="smallBtn red" id="voiceClear" ${initialUrl ? '' : 'disabled'}>Clear</button>
+        <span class="voiceStatus" id="voiceStatus">${initialUrl ? '✅ Saved' : ''}</span>
+      </div>
+    </div>`;
+}
+
+function wireVoiceBlock(form) {
+  if (!voiceSupported()) return;
+  const data    = form.querySelector('#voiceData');
+  const recBtn  = form.querySelector('#voiceRec');
+  const playBtn = form.querySelector('#voicePlay');
+  const clearBtn= form.querySelector('#voiceClear');
+  const status  = form.querySelector('#voiceStatus');
+  let recording = false;
+  let curAudio  = null;
+
+  recBtn.onclick = async () => {
+    if (!recording) {
+      try {
+        await startRecording();
+        recording = true;
+        recBtn.textContent = '⏹ Stop';
+        recBtn.classList.add('rec');
+        status.textContent = 'Recording…';
+      } catch (e) {
+        status.textContent = '⚠️ Mic blocked';
+      }
+    } else {
+      const dataUrl = await stopRecording();
+      recording = false;
+      recBtn.textContent = '🎙 Re-record';
+      recBtn.classList.remove('rec');
+      if (dataUrl) {
+        data.value = dataUrl;
+        playBtn.disabled = false;
+        clearBtn.disabled = false;
+        status.textContent = '✅ Saved';
+      } else {
+        status.textContent = '⚠️ No audio';
+      }
+    }
+  };
+  playBtn.onclick = () => {
+    if (curAudio) { try { curAudio.pause(); } catch {} }
+    curAudio = playVoice(data.value);
+  };
+  clearBtn.onclick = () => {
+    data.value = '';
+    playBtn.disabled = true;
+    clearBtn.disabled = true;
+    status.textContent = '';
+    recBtn.textContent = '🎙 Record';
+  };
 }
 
 function openParentModal(html, onClose) {
@@ -214,11 +280,14 @@ export function showAddTaskModal(kidName, onSave) {
       </label>
       <label>Timer (seconds, 0 = none) <input name="timerSec" type="number" min="0" max="3600" value="0"></label>
       <label>Instruction video URL (YouTube or .mp4, optional) <input name="videoUrl" type="url" placeholder="https://…"></label>
+      <label>🎙 Voice reminder (parent's voice, plays when kid taps timer) ${voiceBlockHtml('')}</label>
       <button type="submit" class="btn green">Add Task</button>
     </form>`;
 
   const close = openParentModal(html);
-  document.getElementById('addTaskForm').onsubmit = e => {
+  const form = document.getElementById('addTaskForm');
+  wireVoiceBlock(form);
+  form.onsubmit = e => {
     e.preventDefault();
     const fd = new FormData(e.target);
     onSave({
@@ -229,6 +298,7 @@ export function showAddTaskModal(kidName, onSave) {
       timeOfDay: fd.get('timeOfDay') || 'any',
       timerSec: parseInt(fd.get('timerSec')) || 0,
       videoUrl: (fd.get('videoUrl') || '').trim(),
+      voiceUrl: fd.get('voiceUrl') || '',
     });
     close();
   };
@@ -254,11 +324,14 @@ export function showEditTaskModal(task, kidName, onSave) {
       </label>
       <label>Timer (seconds, 0 = none) <input name="timerSec" type="number" min="0" max="3600" value="${task.timerSec || 0}"></label>
       <label>Instruction video URL <input name="videoUrl" type="url" value="${task.videoUrl || ''}" placeholder="https://…"></label>
+      <label>🎙 Voice reminder ${voiceBlockHtml(task.voiceUrl || '')}</label>
       <button type="submit" class="btn green">Save Changes</button>
     </form>`;
 
   const close = openParentModal(html);
-  document.getElementById('editTaskForm').onsubmit = e => {
+  const form = document.getElementById('editTaskForm');
+  wireVoiceBlock(form);
+  form.onsubmit = e => {
     e.preventDefault();
     const fd = new FormData(e.target);
     onSave({
@@ -269,6 +342,7 @@ export function showEditTaskModal(task, kidName, onSave) {
       timeOfDay: fd.get('timeOfDay') || 'any',
       timerSec: parseInt(fd.get('timerSec')) || 0,
       videoUrl: (fd.get('videoUrl') || '').trim(),
+      voiceUrl: fd.get('voiceUrl') || '',
     });
     close();
   };

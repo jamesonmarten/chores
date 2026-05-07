@@ -30,8 +30,11 @@ import { showCalendarSyncModal } from './ui/calendar-sync.js';
 import { schedulePush as schedulePushCal } from './utils/calendar-push.js';
 import { maybeEnableCouplesMode, couplesEnabled, showHoneyDueModal } from './ui/honeydue.js';
 import { showRewardsModal } from './ui/rewards.js';
+import { showRoutinesModal } from './ui/routines.js';
 import { showLeaderboardModal } from './ui/leaderboard.js';
 import { showWeeklyReport } from './ui/report.js';
+import { enterFrameMode } from './ui/frame.js';
+import { renderNotesStrip } from './ui/notes.js';
 import { applyThemeBoot } from './utils/theme.js';
 import { applyEffectsBoot } from './utils/effects.js';
 import { getTheme, setTheme } from './utils/theme.js';
@@ -227,6 +230,12 @@ function renderParent() {
   // Push latest events to subscribable calendar feed (debounced)
   schedulePushCal(state);
   syncQuickToggles();
+
+  // Family sticky notes (editable on parent screen)
+  renderNotesStrip(state, document.getElementById('parentNotesStrip'), {
+    editable: true,
+    onChange: () => renderParent(),
+  });
 }
 
 // Parent header buttons
@@ -257,8 +266,10 @@ document.getElementById('btnCalendar').onclick = enterCalendarMode;
 document.getElementById('btnCalSync').onclick  = () => showCalendarSyncModal(state);
 document.getElementById('btnHoneyDo').onclick  = () => showHoneyDueModal();
 document.getElementById('btnRewards').onclick  = () => showRewardsModal(state, () => renderParent());
+document.getElementById('btnRoutines').onclick = () => showRoutinesModal(state, () => renderParent());
 document.getElementById('btnLeaderboard').onclick = () => showLeaderboardModal(state);
 document.getElementById('btnWeeklyReport').onclick = () => showWeeklyReport(state);
+document.getElementById('btnFrameMode').onclick = () => enterFrameMode(state);
 document.getElementById('btnSwitchToKid').onclick = () => {
   if (state.kids.length === 1) {
     enterKidMode(state.kids[0].id);
