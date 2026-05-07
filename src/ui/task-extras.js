@@ -5,6 +5,8 @@
 //
 // Both build their own DOM (do NOT reuse #parentModal so they can sit above the kid view).
 
+import { playSfx } from '../utils/effects.js';
+
 let timerInterval = null;
 
 function buildOverlay(id, innerHtml, extraClass = '') {
@@ -69,10 +71,14 @@ export function showTaskTimer(task, onComplete) {
   const tick = () => {
     clockEl.textContent = fmt(remaining);
     ringEl.setAttribute('stroke-dashoffset', String(circ * (1 - remaining / total)));
-    if (remaining <= 10) clockEl.classList.add('warn');
+    if (remaining <= 10 && remaining > 0) {
+      clockEl.classList.add('warn');
+      playSfx('tick');
+    }
     if (remaining <= 0) {
       clearInterval(timerInterval);
       try { navigator.vibrate?.(300); } catch {}
+      playSfx('warn');
       finish(true);
     }
     remaining--;

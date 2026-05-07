@@ -10,6 +10,7 @@ import { EGGS } from '../data/eggs.js';
 import { showModal } from './render.js';
 import { showTaskTimer, showTaskVideo } from './task-extras.js';
 import { renderRewardChipsForKid } from './rewards.js';
+import { playSfx } from '../utils/effects.js';
 
 let _activeKidId = null;
 let _state = null;
@@ -188,6 +189,7 @@ function toggleChore(kidId, task) {
     ks.totalPoints = (ks.totalPoints || 0) + task.pts;
 
     logHistory(_state, kidId, { message: `Completed "${task.title}"`, task: task.title, pts: task.pts });
+    playSfx('done');
 
     // Check for treats
     const newPts = getPoints(_state, kidId);
@@ -197,6 +199,7 @@ function toggleChore(kidId, task) {
       updateStreak(_state, kidId);
       save(_state);
       launchConfetti();
+      playSfx('levelUp');
       const kid = _state.kids.find(k => k.id === kidId);
       showModal(`Amazing, ${kid?.name}! 🎉`, `You finished all your chores! You earned a treat! 🍬`, false, '🏆');
     }
@@ -206,6 +209,7 @@ function toggleChore(kidId, task) {
     if (egg) {
       ks.eggs = (ks.eggs || 0) + 1;
       launchConfetti();
+      playSfx('reward');
       showModal(egg.title, egg.text, false, egg.emoji);
     }
   }

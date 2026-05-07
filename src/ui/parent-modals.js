@@ -1,6 +1,36 @@
 // FILE: src/ui/parent-modals.js
 // Provides open/close helpers for parent CRUD modals (add/edit kid, add/edit task, settings)
 
+import { getTheme, setTheme } from '../utils/theme.js';
+import { sfxOn, animOn, setSfx, setAnim, playSfx } from '../utils/effects.js';
+
+const KID_PRESETS = [
+  '#ff5ea8', '#ff8a3d', '#ffc83d', '#35c976',
+  '#54b8ff', '#8b6cff', '#ff6b6b', '#3dd4c8',
+];
+
+function colorPickerHtml(name, value) {
+  return `
+    <div class="colorPickRow">
+      <input type="color" name="${name}" value="${value}" class="colorPickWheel">
+      <div class="colorPickPresets">
+        ${KID_PRESETS.map(c => `<button type="button" class="cpSwatch" data-color="${c}" style="background:${c}" aria-label="${c}"></button>`).join('')}
+      </div>
+    </div>`;
+}
+
+function wireColorPickers(form) {
+  form.querySelectorAll('.colorPickRow').forEach(row => {
+    const wheel = row.querySelector('input[type=color]');
+    row.querySelectorAll('.cpSwatch').forEach(sw => {
+      sw.onclick = () => {
+        wheel.value = sw.dataset.color;
+        wheel.dispatchEvent(new Event('input', { bubbles: true }));
+      };
+    });
+  });
+}
+
 function openParentModal(html, onClose) {
   const box = document.getElementById('parentModalBox');
   const modal = document.getElementById('parentModal');
@@ -28,13 +58,15 @@ export function showAddKidModal(onSave) {
       <label>Name <input name="name" required placeholder="e.g. Emma" maxlength="30"></label>
       <label>Age <input name="age" placeholder="e.g. 8 years" maxlength="20"></label>
       <label>Avatar (emoji) <input name="avatar" placeholder="😊" maxlength="4"></label>
-      <label>Color <input name="color" type="color" value="#35c976"></label>
+      <label>Color ${colorPickerHtml('color', '#35c976')}</label>
       <label>Allowance per full day ($) <input name="allowance" type="number" min="0" step="0.5" value="0"></label>
       <button type="submit" class="btn green">Add Kid</button>
     </form>`;
 
   const close = openParentModal(html);
-  document.getElementById('addKidForm').onsubmit = e => {
+  const form = document.getElementById('addKidForm');
+  wireColorPickers(form);
+  form.onsubmit = e => {
     e.preventDefault();
     const fd = new FormData(e.target);
     onSave({
@@ -57,13 +89,15 @@ export function showEditKidModal(kid, onSave) {
       <label>Name <input name="name" required value="${kid.name}" maxlength="30"></label>
       <label>Age <input name="age" value="${kid.age || ''}" maxlength="20"></label>
       <label>Avatar (emoji) <input name="avatar" value="${kid.avatar || '😊'}" maxlength="4"></label>
-      <label>Color <input name="color" type="color" value="${kid.color}"></label>
+      <label>Color ${colorPickerHtml('color', kid.color)}</label>
       <label>Allowance per full day ($) <input name="allowance" type="number" min="0" step="0.5" value="${kid.allowance || 0}"></label>
       <button type="submit" class="btn green">Save Changes</button>
     </form>`;
 
   const close = openParentModal(html);
-  document.getElementById('editKidForm').onsubmit = e => {
+  const form = document.getElementById('editKidForm');
+  wireColorPickers(form);
+  form.onsubmit = e => {
     e.preventDefault();
     const fd = new FormData(e.target);
     onSave({
@@ -157,24 +191,68 @@ export function showEditTaskModal(task, kidName, onSave) {
   };
 }
 
-/** Show Settings modal (PIN change) */
+/** Show Settings modal (PIN change + theme + sounds + animations) */
 export function showSettingsModal(currentPin, onSavePin) {
+  const t = getTheme();
   const html = `
     <button class="pmClose modalCloseX">✕</button>
     <h2 class="pmTitle">⚙️ Settings</h2>
-    <form id="settingsForm" class="pmForm">
-      <label>Current PIN <input name="currentPin" type="password" inputmode="numeric" maxlength="4" placeholder="Current PIN"></label>
-      <label>New PIN <input name="newPin" type="password" inputmode="numeric" maxlength="4" placeholder="4 digits"></label>
-      <label>Confirm PIN <input name="confirmPin" type="password" inputmode="numeric" maxlength="4" placeholder="4 digits"></label>
-      <div class="pmError" id="pinError" hidden></div>
-      <button type="submit" class="btn green">Change PIN</button>
-    </form>`;
+
+    <div class="settingsBlock">
+      <div class="settingsBlockTitle">Appearance</div>
+      <div class="themeToggle">
+        <button type="button" class="themeOpt ${t==='light'?'active':''}" data-theme="light">☀️ Light</button>
+        <button type="button" class="themeOpt ${t==='dark'?'active':''}"  data-theme="dark">🌙 Dark</button>
+      </div>
+    </div>
+
+    <div class="settingsBlock">
+      <div class="settingsBlockTitle">Effects</div>
+      <label class="toggleRow">
+        <span>🔊 Sound effects</span>
+        <input type="checkbox" id="setSfx" ${sfxOn() ? 'checked' : ''}>
+        <span class="toggleSwitch"></span>
+      </label>
+      <label class="toggleRow">
+        <span>✨ Animations &amp; confetti</span>
+        <input type="checkbox" id="setAnim" ${animOn() ? 'checked' : ''}>
+        <span class="toggleSwitch"></span>
+      </label>
+      <button type="button" class="linkBtn" id="testSfx" style="margin-top:6px">▶ Test sound</button>
+    </div>
+
+    <div class="settingsBlock">
+      <div class="settingsBlockTitle">Parent PIN</div>
+      <form id="settingsForm" class="pmForm">
+        <label>Current PIN <input name="currentPin" type="password" inputmode="numeric" maxlength="4" placeholder="Current PIN"></label>
+        <label>New PIN <input name="newPin" type="password" inputmode="numeric" maxlength="4" placeholder="4 digits"></label>
+        <label>Confirm PIN <input name="confirmPin" type="password" inputmode="numeric" maxlength="4" placeholder="4 digits"></label>
+        <div class="pmError" id="pinError" hidden></div>
+        <button type="submit" class="btn green">Change PIN</button>
+      </form>
+    </div>`;
 
   openParentModal(html);
+
+  // Theme toggle (live)
+  document.querySelectorAll('.themeOpt').forEach(btn => {
+    btn.onclick = () => {
+      setTheme(btn.dataset.theme);
+      document.querySelectorAll('.themeOpt').forEach(b => b.classList.toggle('active', b === btn));
+    };
+  });
+
+  // SFX + Anim toggles (live)
+  document.getElementById('setSfx').onchange  = e => { setSfx(e.target.checked); if (e.target.checked) playSfx('done'); };
+  document.getElementById('setAnim').onchange = e => setAnim(e.target.checked);
+  document.getElementById('testSfx').onclick  = () => playSfx('reward');
+
+  // PIN
   document.getElementById('settingsForm').onsubmit = e => {
     e.preventDefault();
     const fd = new FormData(e.target);
     const errEl = document.getElementById('pinError');
+    if (!fd.get('newPin')) { errEl.hidden = true; return; } // Allow saving without changing PIN
     if (fd.get('currentPin') !== currentPin) {
       errEl.textContent = 'Current PIN is incorrect.'; errEl.hidden = false; return;
     }

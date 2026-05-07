@@ -1781,3 +1781,186 @@ h1, h2, h3, h4, h5, h6, p, strong, span, label, a {
   .ttoClock  { font-size: 3.5em; }
   .ttoRing   { width: 180px; height: 180px; }
 }
+
+/* ── v1.2: theme variables, settings, color picker, animation toggle ── */
+
+/* Default = dark (matches existing palette). Light overrides below. */
+:root {
+  --bg:        #0e1016;
+  --bg-elev:  #15171c;
+  --text:      #ffffff;
+  --text-dim:  #9aa1ad;
+  --border:    rgba(255,255,255,.1);
+  --surface:   rgba(255,255,255,.05);
+  --surface-2: rgba(255,255,255,.08);
+}
+:root[data-theme="light"] {
+  --bg:        #f5f6f8;
+  --bg-elev:  #ffffff;
+  --text:      #1a1d24;
+  --text-dim:  #5b6270;
+  --border:    rgba(0,0,0,.12);
+  --surface:   rgba(0,0,0,.04);
+  --surface-2: rgba(0,0,0,.07);
+  color-scheme: light;
+}
+:root[data-theme="dark"] { color-scheme: dark; }
+
+/* Apply variables broadly without rewriting every existing rule */
+:root[data-theme="light"] body,
+:root[data-theme="light"] .parentMain,
+:root[data-theme="light"] .modeSelect,
+:root[data-theme="light"] #pinScreen,
+:root[data-theme="light"] #kidSelectScreen,
+:root[data-theme="light"] #calendarMode,
+:root[data-theme="light"] #parentMode {
+  background: var(--bg);
+  color: var(--text);
+}
+:root[data-theme="light"] .parentHeader,
+:root[data-theme="light"] .pKidCard,
+:root[data-theme="light"] .historySection,
+:root[data-theme="light"] .modal .modalBox,
+:root[data-theme="light"] #parentModalBox {
+  background: var(--bg-elev);
+  color: var(--text);
+  border-color: var(--border);
+}
+:root[data-theme="light"] .iconBtn,
+:root[data-theme="light"] .smallBtn,
+:root[data-theme="light"] .tinyBtn {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+:root[data-theme="light"] .pTaskRow,
+:root[data-theme="light"] .historyRow,
+:root[data-theme="light"] .rwRow,
+:root[data-theme="light"] .kidRwChip {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+}
+:root[data-theme="light"] .pKidName,
+:root[data-theme="light"] .pTaskTitle,
+:root[data-theme="light"] .rwTitle,
+:root[data-theme="light"] .kidRwLabel { color: var(--text); }
+:root[data-theme="light"] .pKidAge,
+:root[data-theme="light"] .pTaskTimer,
+:root[data-theme="light"] .rwMeta,
+:root[data-theme="light"] .kidRwSub,
+:root[data-theme="light"] .rwProgress { color: var(--text-dim); }
+:root[data-theme="light"] .pmTitle,
+:root[data-theme="light"] .pmSub { color: var(--text); }
+:root[data-theme="light"] .pmForm input,
+:root[data-theme="light"] .pmForm select,
+:root[data-theme="light"] .rwAddForm input,
+:root[data-theme="light"] .rwAddForm select {
+  background: #fff;
+  color: var(--text);
+  border-color: var(--border);
+}
+:root[data-theme="light"] .modalCloseX,
+:root[data-theme="light"] .pmClose { color: var(--text); }
+
+/* Animation kill-switch — used by .no-anim on <html> */
+html.no-anim *,
+html.no-anim *::before,
+html.no-anim *::after {
+  animation: none !important;
+  transition: none !important;
+}
+html.no-anim #confettiLayer { display: none !important; }
+
+/* Settings modal blocks */
+.settingsBlock {
+  margin: 14px 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.settingsBlockTitle {
+  font-weight: 700; font-size: .85em;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+}
+.themeToggle { display: flex; gap: 8px; }
+.themeOpt {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 600;
+  transition: background .15s, border-color .15s;
+}
+.themeOpt.active {
+  background: #35c976;
+  color: #fff;
+  border-color: #35c976;
+}
+.toggleRow {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 4px;
+  cursor: pointer;
+  user-select: none;
+}
+.toggleRow input[type="checkbox"] {
+  position: absolute; opacity: 0; pointer-events: none;
+}
+.toggleSwitch {
+  position: relative;
+  width: 44px; height: 24px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  transition: background .2s;
+  flex: 0 0 auto;
+}
+.toggleSwitch::after {
+  content: '';
+  position: absolute; top: 2px; left: 2px;
+  width: 18px; height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform .2s;
+}
+.toggleRow input:checked ~ .toggleSwitch {
+  background: #35c976;
+  border-color: #35c976;
+}
+.toggleRow input:checked ~ .toggleSwitch::after {
+  transform: translateX(20px);
+}
+
+/* Color picker (wheel + presets) */
+.colorPickRow {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 4px;
+}
+.colorPickWheel {
+  width: 48px; height: 38px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  background: transparent;
+  padding: 0;
+}
+.colorPickPresets {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.cpSwatch {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  cursor: pointer;
+  padding: 0;
+  transition: transform .12s;
+}
+.cpSwatch:hover { transform: scale(1.15); }
+.cpSwatch:focus { outline: 2px solid #fff; outline-offset: 2px; }

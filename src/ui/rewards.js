@@ -7,6 +7,7 @@ import {
   rewardProgress, claimReward, save,
 } from '../state/store.js';
 import { launchConfetti } from '../utils/helpers.js';
+import { playSfx } from '../utils/effects.js';
 
 const modal    = () => document.getElementById('parentModal');
 const modalBox = () => document.getElementById('parentModalBox');
@@ -116,7 +117,7 @@ export function showRewardsModal(state, onUpdate) {
     });
     body.querySelectorAll('[data-rw-claim]').forEach(b => b.onclick = () => {
       if (claimReward(state, kidId, b.dataset.rwClaim)) {
-        launchConfetti();
+        launchConfetti(); playSfx('reward');
         renderTab(kidId);
         onUpdate?.();
       }
@@ -165,7 +166,7 @@ export function renderRewardChipsForKid(state, kidId, container) {
   container.querySelectorAll('.kidRwChip.ready').forEach(chip => {
     chip.onclick = () => {
       if (claimReward(state, kidId, chip.dataset.kidRw)) {
-        launchConfetti();
+        launchConfetti(); playSfx('reward');
         renderRewardChipsForKid(state, kidId, container);
       }
     };

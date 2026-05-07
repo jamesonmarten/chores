@@ -30,10 +30,14 @@ import { showCalendarSyncModal } from './ui/calendar-sync.js';
 import { schedulePush as schedulePushCal } from './utils/calendar-push.js';
 import { maybeEnableCouplesMode, couplesEnabled, showHoneyDueModal } from './ui/honeydue.js';
 import { showRewardsModal } from './ui/rewards.js';
+import { applyThemeBoot } from './utils/theme.js';
+import { applyEffectsBoot } from './utils/effects.js';
 
 // ── State ────────────────────────────────────────────────────────
 captureReferralFromUrl();
 maybeEnableCouplesMode();
+applyThemeBoot();
+applyEffectsBoot();
 const state = load();
 
 // ── Screen helpers ───────────────────────────────────────────────
