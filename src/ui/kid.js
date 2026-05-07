@@ -1,9 +1,15 @@
 // FILE: src/ui/kid.js
 import { today, taskKey } from '../utils/date.js';
-import { kidState, getPoints, setPoints, getMaxPoints, getLevel, logHistory, updateStreak, save } from '../state/store.js';
+import {
+  kidState, getPoints, setPoints, getMaxPoints, getLevel,
+  logHistory, updateStreak, save,
+  getTasksSorted, TIME_PERIODS, currentPeriod,
+} from '../state/store.js';
 import { launchConfetti, rollEgg } from '../utils/helpers.js';
 import { EGGS } from '../data/eggs.js';
 import { showModal } from './render.js';
+import { showTaskTimer, showTaskVideo } from './task-extras.js';
+import { renderRewardChipsForKid } from './rewards.js';
 
 let _activeKidId = null;
 let _state = null;
@@ -63,7 +69,7 @@ function renderKidTasks() {
   const kid = _state.kids.find(k => k.id === _activeKidId);
   if (!kid) return;
   const ks = kidState(_state, kid.id);
-  const tasks = (_state.tasks[kid.id] || []);
+  const tasks = getTasksSorted(_state, kid.id);
   const main = document.getElementById('kidMain');
   if (!main) return;
 
@@ -71,13 +77,21 @@ function renderKidTasks() {
   const maxPts = getMaxPoints(_state, kid.id);
   const allDone = pts >= maxPts && tasks.length > 0;
 
+  // Group tasks by time-of-day
+  const cur = currentPeriod();
+  const groups = [
+    ...TIME_PERIODS.map(p => ({ ...p, tasks: tasks.filter(t => t.timeOfDay === p.id) })),
+    { id: 'any', label: 'Any time', emoji: '⭐', tasks: tasks.filter(t => !t.timeOfDay || t.timeOfDay === 'any') },
+  ].filter(g => g.tasks.length > 0);
+
   main.innerHTML = `
     ${allDone ? `<div class="kidCelebration">
-      <div class="celebEmoji">��</div>
+      <div class="celebEmoji">🎉</div>
       <div class="celebText">Amazing work, ${kid.name}!</div>
       <div class="celebSub">You completed all your chores today!</div>
     </div>` : ''}
-    <div class="kidChoreGrid" id="kidChoreGrid"></div>
+    <div id="kidRewardsContainer"></div>
+    <div id="kidGroupsWrap"></div>
     <div class="kidLevelBar">
       <div class="kidLevelInfo">
         ${(() => {
@@ -93,29 +107,67 @@ function renderKidTasks() {
     </div>
   `;
 
-  const grid = main.querySelector('#kidChoreGrid');
-  tasks.forEach((t, i) => {
-    const dKey = taskKey(t.id);
-    const isDone = !!(ks.done || {})[dKey];
-    const card = document.createElement('button');
-    card.className = `choreCard${isDone ? ' done' : ''}`;
-    card.style.setProperty('--kid', kid.color);
-    card.style.animationDelay = `${i * 0.06}s`;
-    card.type = 'button';
-    card.innerHTML = `
-      <div class="choreEmoji">${t.emoji || '✅'}</div>
-      <div class="choreTitle">${t.title}</div>
-      <div class="choreHelper">${isDone ? '✓ Done!' : t.helper}</div>
-      <div class="chorePts ${isDone ? 'done' : ''}">+${t.pts}</div>
-      ${isDone ? '<div class="choreCheck">✓</div>' : ''}
+  // Reward chips
+  renderRewardChipsForKid(_state, kid.id, main.querySelector('#kidRewardsContainer'));
+
+  // Render grouped task sections
+  const wrap = main.querySelector('#kidGroupsWrap');
+  groups.forEach((g, gi) => {
+    const isCurrent = g.id === cur;
+    const section = document.createElement('section');
+    section.className = `kidGroup${isCurrent ? ' current' : ''}`;
+    section.innerHTML = `
+      <h3 class="kidGroupTitle">
+        <span>${g.emoji} ${g.label}</span>
+        ${isCurrent ? '<span class="kidGroupNow">Now</span>' : ''}
+      </h3>
+      <div class="kidChoreGrid"></div>
     `;
-    card.onclick = () => toggleChore(_activeKidId, t);
-    grid.appendChild(card);
+    const grid = section.querySelector('.kidChoreGrid');
+    g.tasks.forEach((t, i) => {
+      const dKey = taskKey(t.id);
+      const isDone = !!(ks.done || {})[dKey];
+      const card = document.createElement('div');
+      card.className = `choreCard${isDone ? ' done' : ''}`;
+      card.style.setProperty('--kid', kid.color);
+      card.style.animationDelay = `${(gi * 4 + i) * 0.05}s`;
+      card.innerHTML = `
+        <div class="choreEmoji">${t.emoji || '✅'}</div>
+        <div class="choreTitle">${t.title}</div>
+        <div class="choreHelper">${isDone ? '✓ Done!' : t.helper}</div>
+        <div class="chorePts ${isDone ? 'done' : ''}">+${t.pts}</div>
+        ${isDone ? '<div class="choreCheck">✓</div>' : ''}
+        ${(t.timerSec > 0 || t.videoUrl) && !isDone ? `
+          <div class="choreExtras">
+            ${t.videoUrl ? `<button class="choreExtraBtn" data-video="${t.id}" title="Watch instructions">🎥</button>` : ''}
+            ${t.timerSec > 0 ? `<button class="choreExtraBtn" data-timer="${t.id}" title="Start ${t.timerSec}s timer">⏱ ${t.timerSec}s</button>` : ''}
+          </div>` : ''}
+      `;
+      // Main card click → toggle (but not when clicking extras)
+      card.onclick = (e) => {
+        if (e.target.closest('.choreExtraBtn')) return;
+        toggleChore(_activeKidId, t);
+      };
+      grid.appendChild(card);
+    });
+    wrap.appendChild(section);
   });
 
   if (tasks.length === 0) {
-    grid.innerHTML = '<div class="kidNoTasks">No chores yet! Ask a parent to add some.</div>';
+    wrap.innerHTML = '<div class="kidNoTasks">No chores yet! Ask a parent to add some.</div>';
   }
+
+  // Wire extras
+  wrap.querySelectorAll('[data-video]').forEach(b => b.onclick = (e) => {
+    e.stopPropagation();
+    const t = tasks.find(x => x.id === b.dataset.video);
+    if (t) showTaskVideo(t);
+  });
+  wrap.querySelectorAll('[data-timer]').forEach(b => b.onclick = (e) => {
+    e.stopPropagation();
+    const t = tasks.find(x => x.id === b.dataset.timer);
+    if (t) showTaskTimer(t, () => toggleChore(_activeKidId, t));
+  });
 }
 
 function toggleChore(kidId, task) {

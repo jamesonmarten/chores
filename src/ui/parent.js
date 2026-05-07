@@ -1,7 +1,17 @@
 // FILE: src/ui/parent.js
 import { today } from '../utils/date.js';
-import { kidState, getPoints, getMaxPoints, getLevel, isPro } from '../state/store.js';
+import {
+  kidState, getPoints, getMaxPoints, getLevel, isPro,
+  getTasksSorted, reorderTasks, rebalancePoints, save,
+} from '../state/store.js';
 import { launchConfetti } from '../utils/helpers.js';
+
+const TOD_META = {
+  any:       { emoji: '⭐', label: 'Any' },
+  morning:   { emoji: '🌅', label: 'AM' },
+  afternoon: { emoji: '☀️', label: 'PM' },
+  evening:   { emoji: '🌙', label: 'Eve' },
+};
 
 /** Render parent stats bar */
 export function renderParentStats(state) {
@@ -35,7 +45,8 @@ export function renderParentKids(state, { onEditKid, onRemoveKid, onAddTask, onE
     const maxPts = getMaxPoints(state, kid.id);
     const pct = Math.min(100, maxPts ? Math.round(pts / maxPts * 100) : 0);
     const lvlInfo = getLevel(ks.totalPoints || 0);
-    const tasks = state.tasks[kid.id] || [];
+    const tasks = getTasksSorted(state, kid.id);
+    const taskTotal = tasks.reduce((a, t) => a + (t.pts || 0), 0);
 
     const card = document.createElement('article');
     card.className = 'pKidCard';
@@ -66,17 +77,26 @@ export function renderParentKids(state, { onEditKid, onRemoveKid, onAddTask, onE
       </div>
 
       <div class="pTaskListHeader">
-        <span>Tasks (${tasks.length})</span>
-        <button class="smallBtn green" data-add-task="${kid.id}">+ Add Task</button>
+        <span>Tasks (${tasks.length}) · <span class="pTotalPts ${taskTotal===100?'good':''}">total ${taskTotal} pts</span></span>
+        <span class="pTaskHdrBtns">
+          ${tasks.length > 0 && taskTotal !== 100
+            ? `<button class="smallBtn" data-balance="${kid.id}" title="Auto-scale all task points so they sum to 100">≡ Balance to 100</button>` : ''}
+          <button class="smallBtn green" data-add-task="${kid.id}">+ Add Task</button>
+        </span>
       </div>
-      <div class="pTaskList" id="pTasks_${kid.id}">
+      <div class="pTaskList" id="pTasks_${kid.id}" data-kid-list="${kid.id}">
         ${tasks.map(t => {
           const doneKey = today() + '_' + t.id;
           const isDone = !!(ks.done || {})[doneKey];
-          return `<div class="pTaskRow ${isDone ? 'done' : ''}">
+          const tod = TOD_META[t.timeOfDay || 'any'];
+          return `<div class="pTaskRow ${isDone ? 'done' : ''}" draggable="true" data-task-id="${t.id}">
+            <span class="pDragHandle" title="Drag to reorder">⋮⋮</span>
             <span class="pTaskCheck" data-mark="${kid.id}" data-task="${t.id}" style="cursor:pointer">${isDone ? '✅' : '⬜'}</span>
             <span class="pTaskEmoji">${t.emoji || '✅'}</span>
             <span class="pTaskTitle">${t.title}</span>
+            <span class="pTodBadge" title="${tod.label}">${tod.emoji}</span>
+            ${t.timerSec ? `<span class="pTaskTimer" title="Timer">⏱${t.timerSec}s</span>` : ''}
+            ${t.videoUrl ? `<span class="pTaskTimer" title="Has instruction video">🎥</span>` : ''}
             <span class="pTaskPts">+${t.pts}</span>
             <button class="tinyBtn" data-edit-task="${t.id}" data-kid="${kid.id}">✏️</button>
             <button class="tinyBtn red" data-remove-task="${t.id}" data-kid="${kid.id}">✕</button>
@@ -108,6 +128,61 @@ export function renderParentKids(state, { onEditKid, onRemoveKid, onAddTask, onE
     });
     const payBtn = card.querySelector(`[data-pay="${kid.id}"]`);
     if (payBtn) payBtn.onclick = () => onPayAllowance(kid.id);
+
+    // Balance-to-100 button
+    const balBtn = card.querySelector(`[data-balance="${kid.id}"]`);
+    if (balBtn) balBtn.onclick = () => {
+      rebalancePoints(state, kid.id, 100);
+      // Re-render this whole grid so totals + per-row pts update
+      renderParentKids(state, { onEditKid, onRemoveKid, onAddTask, onEditTask, onRemoveTask, onResetDay, onMarkTask, onPayAllowance });
+    };
+
+    // Drag-and-drop reorder
+    enableDragReorder(card.querySelector(`[data-kid-list="${kid.id}"]`), kid.id, state, () => {
+      renderParentKids(state, { onEditKid, onRemoveKid, onAddTask, onEditTask, onRemoveTask, onResetDay, onMarkTask, onPayAllowance });
+    });
+  });
+}
+
+/** Enable HTML5 drag-and-drop reordering for a task list element. */
+function enableDragReorder(listEl, kidId, state, onChange) {
+  if (!listEl) return;
+  let dragId = null;
+
+  listEl.querySelectorAll('.pTaskRow').forEach(row => {
+    row.addEventListener('dragstart', (e) => {
+      dragId = row.dataset.taskId;
+      row.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', dragId); } catch {}
+    });
+    row.addEventListener('dragend', () => {
+      row.classList.remove('dragging');
+      listEl.querySelectorAll('.pTaskRow').forEach(r => r.classList.remove('dropTarget'));
+    });
+    row.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const over = e.currentTarget;
+      if (over.dataset.taskId === dragId) return;
+      over.classList.add('dropTarget');
+    });
+    row.addEventListener('dragleave', (e) => e.currentTarget.classList.remove('dropTarget'));
+    row.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const over = e.currentTarget;
+      over.classList.remove('dropTarget');
+      if (!dragId || dragId === over.dataset.taskId) return;
+      // Build new order
+      const ids = Array.from(listEl.querySelectorAll('.pTaskRow')).map(r => r.dataset.taskId);
+      const fromIdx = ids.indexOf(dragId);
+      const toIdx   = ids.indexOf(over.dataset.taskId);
+      if (fromIdx < 0 || toIdx < 0) return;
+      ids.splice(fromIdx, 1);
+      ids.splice(toIdx, 0, dragId);
+      reorderTasks(state, kidId, ids);
+      onChange?.();
+    });
   });
 }
 

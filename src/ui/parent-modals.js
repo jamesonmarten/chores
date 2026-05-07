@@ -87,6 +87,16 @@ export function showAddTaskModal(kidName, onSave) {
       <label>Emoji <input name="emoji" placeholder="🧹" maxlength="4"></label>
       <label>Points <input name="pts" type="number" min="1" max="100" value="10"></label>
       <label>Helper text <input name="helper" placeholder="e.g. Tap when done" maxlength="60"></label>
+      <label>Time of day
+        <select name="timeOfDay">
+          <option value="any">Any time</option>
+          <option value="morning">🌅 Morning</option>
+          <option value="afternoon">☀️ Afternoon</option>
+          <option value="evening">🌙 Evening</option>
+        </select>
+      </label>
+      <label>Timer (seconds, 0 = none) <input name="timerSec" type="number" min="0" max="3600" value="0"></label>
+      <label>Instruction video URL (YouTube or .mp4, optional) <input name="videoUrl" type="url" placeholder="https://…"></label>
       <button type="submit" class="btn green">Add Task</button>
     </form>`;
 
@@ -99,6 +109,9 @@ export function showAddTaskModal(kidName, onSave) {
       emoji: fd.get('emoji').trim() || '✅',
       pts: parseInt(fd.get('pts')) || 10,
       helper: fd.get('helper').trim() || 'Tap when done',
+      timeOfDay: fd.get('timeOfDay') || 'any',
+      timerSec: parseInt(fd.get('timerSec')) || 0,
+      videoUrl: (fd.get('videoUrl') || '').trim(),
     });
     close();
   };
@@ -114,6 +127,16 @@ export function showEditTaskModal(task, kidName, onSave) {
       <label>Emoji <input name="emoji" value="${task.emoji || '✅'}" maxlength="4"></label>
       <label>Points <input name="pts" type="number" min="1" max="100" value="${task.pts}"></label>
       <label>Helper text <input name="helper" value="${task.helper || ''}" maxlength="60"></label>
+      <label>Time of day
+        <select name="timeOfDay">
+          <option value="any"${(task.timeOfDay||'any')==='any'?' selected':''}>Any time</option>
+          <option value="morning"${task.timeOfDay==='morning'?' selected':''}>🌅 Morning</option>
+          <option value="afternoon"${task.timeOfDay==='afternoon'?' selected':''}>☀️ Afternoon</option>
+          <option value="evening"${task.timeOfDay==='evening'?' selected':''}>🌙 Evening</option>
+        </select>
+      </label>
+      <label>Timer (seconds, 0 = none) <input name="timerSec" type="number" min="0" max="3600" value="${task.timerSec || 0}"></label>
+      <label>Instruction video URL <input name="videoUrl" type="url" value="${task.videoUrl || ''}" placeholder="https://…"></label>
       <button type="submit" class="btn green">Save Changes</button>
     </form>`;
 
@@ -126,6 +149,9 @@ export function showEditTaskModal(task, kidName, onSave) {
       emoji: fd.get('emoji').trim() || task.emoji,
       pts: parseInt(fd.get('pts')) || task.pts,
       helper: fd.get('helper').trim() || task.helper,
+      timeOfDay: fd.get('timeOfDay') || 'any',
+      timerSec: parseInt(fd.get('timerSec')) || 0,
+      videoUrl: (fd.get('videoUrl') || '').trim(),
     });
     close();
   };

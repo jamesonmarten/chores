@@ -36,11 +36,16 @@ const DEFAULT_TASKS = {
 };
 
 function fresh() {
+  const tasks = {};
+  Object.entries(DEFAULT_TASKS).forEach(([kidId, list]) => {
+    tasks[kidId] = list.map((t, i) => ({ ...t, order: i, timeOfDay: 'any', timerSec: 0, videoUrl: '' }));
+  });
   return {
     isPro: false,
     familyId: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36),
     kids: DEFAULT_KIDS,
-    tasks: DEFAULT_TASKS,
+    tasks,
+    rewards: {}, // { kidId: Reward[] }
     kidData: Object.fromEntries(
       DEFAULT_KIDS.map(k => [k.id, {
         pointsByDate: {}, done: {}, treats: 0, eggs: 0,
@@ -48,6 +53,20 @@ function fresh() {
       }])
     ),
   };
+}
+
+/** Migrate older saved state to the latest schema. Mutates in place. */
+function migrate(state) {
+  state.rewards = state.rewards || {};
+  Object.values(state.tasks || {}).forEach(list => {
+    list.forEach((t, i) => {
+      if (typeof t.order     !== 'number') t.order = i;
+      if (typeof t.timeOfDay !== 'string') t.timeOfDay = 'any';
+      if (typeof t.timerSec  !== 'number') t.timerSec = 0;
+      if (typeof t.videoUrl  !== 'string') t.videoUrl = '';
+    });
+  });
+  return state;
 }
 
 export function load() {
@@ -62,7 +81,7 @@ export function load() {
         allowanceEarned: 0, history: [], streak: 0, bestStreak: 0, totalPoints: 0, level: 1,
       };
     });
-    return parsed;
+    return migrate(parsed);
   } catch { return fresh(); }
 }
 
@@ -96,9 +115,19 @@ export function updateKid(state, kidId, updates) {
   save(state);
 }
 
-export function addTask(state, kidId, { title, pts, helper, emoji }) {
+export function addTask(state, kidId, { title, pts, helper, emoji, timeOfDay, timerSec, videoUrl }) {
   state.tasks[kidId] = state.tasks[kidId] || [];
-  state.tasks[kidId].push({ id: title.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now(), title, pts: Number(pts) || 10, helper: helper || 'Tap when done', emoji: emoji || '✅' });
+  const order = state.tasks[kidId].length;
+  state.tasks[kidId].push({
+    id: title.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now(),
+    title, pts: Number(pts) || 10,
+    helper: helper || 'Tap when done',
+    emoji: emoji || '✅',
+    order,
+    timeOfDay: timeOfDay || 'any',
+    timerSec: Number(timerSec) || 0,
+    videoUrl: (videoUrl || '').trim(),
+  });
   save(state);
 }
 
@@ -150,4 +179,128 @@ export function updateStreak(state, kidId) {
     ks.streak = yestDone ? (ks.streak || 0) + 1 : 1;
     ks.bestStreak = Math.max(ks.bestStreak || 0, ks.streak);
   }
+}
+
+// ── Sorting & time-of-day ──────────────────────────────────────────────────
+export const TIME_PERIODS = [
+  { id: 'morning',   label: 'Morning',   emoji: '🌅', startHr: 5,  endHr: 12 },
+  { id: 'afternoon', label: 'Afternoon', emoji: '☀️', startHr: 12, endHr: 17 },
+  { id: 'evening',   label: 'Evening',   emoji: '🌙', startHr: 17, endHr: 24 },
+];
+
+export function currentPeriod(d = new Date()) {
+  const h = d.getHours();
+  return TIME_PERIODS.find(p => h >= p.startHr && h < p.endHr)?.id || 'evening';
+}
+
+export function getTasksSorted(state, kidId) {
+  const list = (state.tasks[kidId] || []).slice();
+  list.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  return list;
+}
+
+/** Reorder a kid's task list by an array of task ids (in their new order). */
+export function reorderTasks(state, kidId, orderedIds) {
+  const list = state.tasks[kidId] || [];
+  const map = Object.fromEntries(list.map(t => [t.id, t]));
+  const next = [];
+  orderedIds.forEach((id, i) => {
+    if (map[id]) { map[id].order = i; next.push(map[id]); delete map[id]; }
+  });
+  // Append leftovers (defensive)
+  Object.values(map).forEach(t => { t.order = next.length; next.push(t); });
+  state.tasks[kidId] = next;
+  save(state);
+}
+
+/** Rescale a kid's task points so the daily total = target (default 100). */
+export function rebalancePoints(state, kidId, target = 100) {
+  const list = state.tasks[kidId] || [];
+  const total = list.reduce((a, t) => a + (t.pts || 0), 0);
+  if (!list.length || !total) return;
+  const scale = target / total;
+  let runningSum = 0;
+  list.forEach((t, i) => {
+    if (i === list.length - 1) {
+      t.pts = Math.max(1, target - runningSum);
+    } else {
+      t.pts = Math.max(1, Math.round((t.pts || 0) * scale));
+      runningSum += t.pts;
+    }
+  });
+  save(state);
+}
+
+// ── Rewards ────────────────────────────────────────────────────────────────
+/**
+ * @typedef {{ id:string, title:string, emoji:string, costPts:number,
+ *   cadence:'daily'|'weekly'|'monthly'|'custom', cadenceN:number,
+ *   history:{at:number,ptsSpent:number}[], active:boolean }} Reward
+ */
+export function getRewards(state, kidId) {
+  state.rewards = state.rewards || {};
+  return state.rewards[kidId] || [];
+}
+
+export function addReward(state, kidId, { title, emoji, costPts, cadence, cadenceN }) {
+  state.rewards = state.rewards || {};
+  state.rewards[kidId] = state.rewards[kidId] || [];
+  state.rewards[kidId].push({
+    id: 'r_' + Math.random().toString(36).slice(2, 8) + Date.now().toString(36),
+    title, emoji: emoji || '🎁',
+    costPts: Number(costPts) || 100,
+    cadence: cadence || 'weekly',
+    cadenceN: Number(cadenceN) || 1,
+    history: [], active: true,
+  });
+  save(state);
+}
+
+export function updateReward(state, kidId, rewardId, updates) {
+  const r = (state.rewards?.[kidId] || []).find(x => x.id === rewardId);
+  if (r) Object.assign(r, updates);
+  save(state);
+}
+
+export function removeReward(state, kidId, rewardId) {
+  if (!state.rewards?.[kidId]) return;
+  state.rewards[kidId] = state.rewards[kidId].filter(r => r.id !== rewardId);
+  save(state);
+}
+
+/** Returns { earned, target, pct } toward a reward's current cadence window. */
+export function rewardProgress(state, kidId, reward) {
+  const ks = kidState(state, kidId);
+  const now = new Date();
+  let windowStart;
+  if (reward.cadence === 'daily') {
+    windowStart = new Date(now); windowStart.setHours(0,0,0,0);
+  } else if (reward.cadence === 'weekly') {
+    windowStart = new Date(now); windowStart.setDate(now.getDate() - now.getDay()); windowStart.setHours(0,0,0,0);
+  } else if (reward.cadence === 'monthly') {
+    windowStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  } else {
+    windowStart = new Date(now); windowStart.setDate(now.getDate() - (reward.cadenceN || 7)); windowStart.setHours(0,0,0,0);
+  }
+  let earned = 0;
+  Object.entries(ks.pointsByDate || {}).forEach(([dateIso, pts]) => {
+    const d = new Date(dateIso + 'T12:00:00');
+    if (d >= windowStart) earned += pts;
+  });
+  (reward.history || []).forEach(h => { if (h.at >= windowStart.getTime()) earned -= h.ptsSpent; });
+  earned = Math.max(0, earned);
+  const target = reward.costPts;
+  return { earned, target, pct: Math.min(100, Math.round(earned / target * 100)) };
+}
+
+export function claimReward(state, kidId, rewardId) {
+  const r = (state.rewards?.[kidId] || []).find(x => x.id === rewardId);
+  if (!r) return false;
+  const { earned, target } = rewardProgress(state, kidId, r);
+  if (earned < target) return false;
+  r.history = r.history || [];
+  r.history.unshift({ at: Date.now(), ptsSpent: target });
+  logHistory(state, kidId, { message: `Claimed reward: "${r.title}" (-${target} pts)`, pts: -target });
+  save(state);
+  return true;
 }

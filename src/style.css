@@ -1551,3 +1551,233 @@ h1, h2, h3, h4, h5, h6, p, strong, span, label, a {
   .honeyAdd { grid-template-columns: 1fr; }
   .honeyTask { grid-template-columns: 1fr auto; row-gap: 4px; }
 }
+
+/* ── Pooh-pack v1: drag, time-of-day, balance, timer, video, rewards ── */
+
+/* Parent task row drag handle + badges */
+.pDragHandle {
+  cursor: grab; user-select: none;
+  color: #9aa1ad; font-weight: 700;
+  padding: 0 4px; letter-spacing: -1px;
+}
+.pDragHandle:active { cursor: grabbing; }
+.pTaskRow.dragging  { opacity: .35; }
+.pTaskRow.dropTarget {
+  outline: 2px dashed var(--kid, #35c976);
+  outline-offset: -2px;
+  background: rgba(53,201,118,.06);
+}
+.pTodBadge {
+  font-size: .85em;
+  padding: 2px 6px;
+  background: rgba(255,255,255,.06);
+  border-radius: 6px;
+  margin: 0 2px;
+}
+.pTaskTimer {
+  font-size: .75em;
+  color: #9aa1ad;
+  background: rgba(255,255,255,.04);
+  padding: 1px 5px;
+  border-radius: 5px;
+  margin: 0 2px;
+}
+.pTotalPts.good { color: #35c976; font-weight: 700; }
+.pTaskHdrBtns { display: inline-flex; gap: 6px; }
+
+/* Kid: time-of-day group sections */
+.kidGroup {
+  margin-bottom: 22px;
+}
+.kidGroup.current .kidGroupTitle { color: var(--kid, #35c976); }
+.kidGroupTitle {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 1.1em; margin: 14px 4px 8px;
+  font-weight: 700;
+}
+.kidGroupNow {
+  font-size: .65em;
+  background: var(--kid, #35c976);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 8px;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+
+/* Chore card extras (timer + video buttons) */
+.choreCard { position: relative; cursor: pointer; }
+.choreExtras {
+  display: flex; gap: 6px; margin-top: 8px; justify-content: center;
+}
+.choreExtraBtn {
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.15);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: .85em;
+  cursor: pointer;
+  transition: background .15s;
+}
+.choreExtraBtn:hover { background: rgba(255,255,255,.2); }
+
+/* Reward chips (kid view) */
+.kidRewardsBar {
+  background: linear-gradient(135deg, rgba(255,200,80,.06), rgba(255,100,180,.06));
+  border: 1px solid rgba(255,200,80,.18);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.kidRewardsTitle {
+  font-weight: 700; margin-bottom: 10px;
+  font-size: .95em;
+}
+.kidRewardsList {
+  display: flex; gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.kidRwChip {
+  flex: 0 0 auto;
+  display: flex; gap: 10px; align-items: center;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  padding: 8px 12px;
+  border-radius: 10px;
+  min-width: 200px;
+  cursor: default;
+}
+.kidRwChip.ready {
+  cursor: pointer;
+  border-color: #35c976;
+  background: rgba(53,201,118,.12);
+  animation: rwPulse 1.6s ease-in-out infinite;
+}
+@keyframes rwPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(53,201,118,.5); }
+  50%      { box-shadow: 0 0 0 8px rgba(53,201,118,0); }
+}
+.kidRwEmoji { font-size: 1.6em; }
+.kidRwTextWrap { flex: 1; min-width: 0; }
+.kidRwLabel { font-weight: 600; font-size: .9em; }
+.kidRwBar {
+  height: 5px;
+  background: rgba(255,255,255,.1);
+  border-radius: 3px; overflow: hidden;
+  margin: 4px 0 3px;
+}
+.kidRwFill { height: 100%; transition: width .4s; }
+.kidRwSub  { font-size: .75em; color: #aab2c0; }
+
+/* Reward modal — parent */
+.rwTabs { display: flex; gap: 6px; margin: 12px 0; flex-wrap: wrap; }
+.rwTab {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: .9em;
+}
+.rwTab.active {
+  background: var(--kid, #35c976);
+  border-color: var(--kid, #35c976);
+}
+.rwAddForm {
+  display: grid;
+  grid-template-columns: 1fr 70px 90px 130px 90px auto;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.rwAddForm input, .rwAddForm select {
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  color: #fff;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: .9em;
+}
+.rwList { display: flex; flex-direction: column; gap: 10px; }
+.rwRow {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+  border-left: 3px solid var(--kid, #35c976);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.rwRowMain { display: flex; align-items: center; gap: 10px; }
+.rwEmoji   { font-size: 1.5em; }
+.rwInfo    { flex: 1; }
+.rwTitle   { font-weight: 600; }
+.rwMeta    { font-size: .8em; color: #9aa1ad; }
+.rwBar {
+  height: 6px;
+  background: rgba(255,255,255,.08);
+  border-radius: 3px;
+  margin: 8px 0 4px;
+  overflow: hidden;
+}
+.rwBarFill { height: 100%; transition: width .4s; }
+.rwProgress { font-size: .8em; color: #aab2c0; }
+
+/* Timer overlay */
+.taskOverlay {
+  position: fixed; inset: 0;
+  background: rgba(10,12,18,.94);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9000;
+  opacity: 0; pointer-events: none;
+  transition: opacity .22s ease;
+  padding: 20px;
+}
+.taskOverlay.show { opacity: 1; pointer-events: auto; }
+.ttoCard {
+  text-align: center; max-width: 420px;
+}
+.ttoEmoji  { font-size: 3em; }
+.ttoTitle  { font-size: 1.6em; font-weight: 700; margin: 6px 0 4px; }
+.ttoHelper { color: #9aa1ad; margin-bottom: 18px; }
+.ttoClock {
+  font-size: 5em; font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  margin: 12px 0;
+  color: #fff;
+  text-shadow: 0 0 28px rgba(53,201,118,.4);
+}
+.ttoClock.warn {
+  color: #ff6b6b;
+  text-shadow: 0 0 28px rgba(255,107,107,.5);
+  animation: warnPulse .5s ease-in-out infinite alternate;
+}
+@keyframes warnPulse { from { transform: scale(1); } to { transform: scale(1.06); } }
+.ttoRing { width: 220px; height: 220px; margin: 0 auto 18px; }
+.ttoRing svg { width: 100%; height: 100%; }
+.ttoBtns { display: flex; gap: 10px; justify-content: center; }
+
+/* Video overlay */
+.tvoCard {
+  background: #15171c;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 16px;
+  padding: 16px;
+  width: 100%; max-width: 720px;
+  position: relative;
+}
+.tvoClose {
+  position: absolute; top: 8px; right: 10px;
+  background: transparent; border: none; color: #fff;
+  font-size: 1.4em; cursor: pointer;
+}
+.tvoTitle  { font-size: 1.2em; font-weight: 700; margin-bottom: 12px; padding-right: 30px; }
+.tvoPlayer { aspect-ratio: 16/9; background: #000; border-radius: 10px; overflow: hidden; }
+.tvoPlayer iframe, .tvoPlayer video { width: 100%; height: 100%; border: 0; display: block; }
+.tvoHelper { margin-top: 10px; color: #9aa1ad; font-size: .9em; }
+
+@media (max-width: 640px) {
+  .rwAddForm { grid-template-columns: 1fr 1fr; }
+  .ttoClock  { font-size: 3.5em; }
+  .ttoRing   { width: 180px; height: 180px; }
+}

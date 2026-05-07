@@ -29,6 +29,7 @@ import {
 import { showCalendarSyncModal } from './ui/calendar-sync.js';
 import { schedulePush as schedulePushCal } from './utils/calendar-push.js';
 import { maybeEnableCouplesMode, couplesEnabled, showHoneyDueModal } from './ui/honeydue.js';
+import { showRewardsModal } from './ui/rewards.js';
 
 // ── State ────────────────────────────────────────────────────────
 captureReferralFromUrl();
@@ -227,6 +228,7 @@ document.getElementById('btnSettings').onclick = () => {
 document.getElementById('btnCalendar').onclick = enterCalendarMode;
 document.getElementById('btnCalSync').onclick  = () => showCalendarSyncModal(state);
 document.getElementById('btnHoneyDo').onclick  = () => showHoneyDueModal();
+document.getElementById('btnRewards').onclick  = () => showRewardsModal(state, () => renderParent());
 document.getElementById('btnSwitchToKid').onclick = () => {
   if (state.kids.length === 1) {
     enterKidMode(state.kids[0].id);
