@@ -41,14 +41,21 @@ import { applyEffectsBoot } from './utils/effects.js';
 import { getTheme, setTheme } from './utils/theme.js';
 import { sfxOn, setSfx, playSfx } from './utils/effects.js';
 import { notifyBoot } from './utils/notify.js';
+import {
+  captureGodFromUrl, applyGodBoot, installGodConsole, isGod, renderGodBadge,
+} from './utils/admin.js';
 
 // ── State ────────────────────────────────────────────────────────
+captureGodFromUrl();        // unlock from ?god=KEY before anything else
+applyGodBoot();             // force-grant Pro + feature flags if god mode is on
+installGodConsole();        // window.godOn(key) / window.godOff()
 captureReferralFromUrl();
 maybeEnableCouplesMode();
 applyThemeBoot();
 applyEffectsBoot();
 notifyBoot();
 const state = load();
+if (isGod()) activatePro(state);   // mark local state Pro too
 
 // ── Screen helpers ───────────────────────────────────────────────
 const screens = ['modeSelect','pinScreen','parentMode','calendarMode','kidSelectScreen','kidMode'];
@@ -69,6 +76,7 @@ if (dismissBtn) dismissBtn.onclick = () => { banner.hidden = true; };
 function goHome() { showScreen('modeSelect'); }
 
 document.getElementById('btnParentMode').onclick = () => {
+  if (isGod()) { enterParentMode(); return; }   // superadmin skips the PIN
   showScreen('pinScreen');
   renderPinPad();
 };
@@ -130,6 +138,13 @@ document.getElementById('pinBackBtn').onclick = goHome;
 
 // ── PARENT MODE ──────────────────────────────────────────────────
 function enterParentMode() {
+  // Superadmin: skip signup + paywall entirely.
+  if (isGod()) {
+    showScreen('parentMode');
+    renderParent();
+    renderGodBadge();
+    return;
+  }
   // Gate behind signup + trial/paywall
   const allowed = ensureAccess({
     onAllowed: () => {
