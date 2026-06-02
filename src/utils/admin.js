@@ -3,8 +3,9 @@
 // full app on any device without going through signup, the paywall, or the PIN.
 //
 // Usage:
-//   1. Visit  https://chores.devcabin.tech/?god=devcabin-godmode-2026
-//      (the param is stripped from the URL after it unlocks)
+//   1. Visit  https://chores.devcabin.tech/app?god=devcabin-godmode-2026
+//      (the marketing root / will also forward you to /app automatically.
+//       The param is stripped from the URL after it unlocks.)
 //   2. Or in DevTools console:  window.godOn('devcabin-godmode-2026')
 //   3. Turn off with:           window.godOff()
 
@@ -69,6 +70,7 @@ export function applyGodBoot() {
   try {
     // Unlock hidden partner/couples + spicy features.
     localStorage.setItem('familyChoresCouples', '1');
+    localStorage.setItem('familyChoresCouplesEnabled', '1'); // flag honeydue.js actually reads
     localStorage.setItem('familyChoresSpicy', '1');
 
     // Make sure an account exists and is marked paid so the paywall never shows.
