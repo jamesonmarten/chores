@@ -250,11 +250,16 @@ function openParentModal(html, onClose) {
   const close = () => {
     modal.classList.remove('show');
     setTimeout(() => { modal.hidden = true; box.innerHTML = ''; }, 220);
+    document.removeEventListener('keydown', onKey);
     if (onClose) onClose();
   };
 
+  function onKey(e) { if (e.key === 'Escape') close(); }
+
   modal.onclick = e => { if (e.target.id === 'parentModal') close(); };
-  box.querySelector('.pmClose')?.addEventListener('click', close);
+  // Wire EVERY .pmClose (X button, Cancel button, etc.), not just the first.
+  box.querySelectorAll('.pmClose').forEach(el => el.addEventListener('click', close));
+  document.addEventListener('keydown', onKey);
   return close;
 }
 

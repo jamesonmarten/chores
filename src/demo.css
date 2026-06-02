@@ -103,7 +103,31 @@ footer{padding:40px 24px;text-align:center;color:var(--muted);font-size:.82rem;f
 @keyframes gradShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
 @keyframes pop{0%{transform:scale(.8);opacity:0}50%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
 .pop{animation:pop .35s ease}
+
+/* ── Guided tour ─────────────────────────────────────────────────── */
+.tourStartBtn{margin-top:22px;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.35);color:var(--blue2);font-weight:900;font-size:.95rem;padding:13px 26px;border-radius:14px;cursor:pointer;transition:all .18s}
+.tourStartBtn:hover{background:rgba(56,189,248,.2);transform:translateY(-2px);box-shadow:0 10px 30px rgba(56,189,248,.25)}
+
+.tourLayer{position:fixed;inset:0;z-index:9000;opacity:0;pointer-events:none;transition:opacity .25s ease}
+.tourLayer.show{opacity:1;pointer-events:auto}
+/* The spotlight uses a huge box-shadow to dim everything around the target */
+.tourSpotlight{position:absolute;border-radius:16px;box-shadow:0 0 0 9999px rgba(2,8,16,.82);border:2px solid var(--blue);transition:top .35s ease,left .35s ease,width .35s ease,height .35s ease;pointer-events:none}
+.tourPop{position:absolute;width:340px;max-width:calc(100vw - 32px);background:var(--card2);border:1px solid rgba(56,189,248,.3);border-radius:18px;padding:22px;box-shadow:0 24px 60px rgba(0,0,0,.6);transition:top .35s ease,left .35s ease;animation:tourPopIn .3s ease both}
+@keyframes tourPopIn{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
+.tourStep{font-size:.72rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--blue2);margin-bottom:8px}
+.tourTitle{font-size:1.15rem;font-weight:900;margin-bottom:8px;line-height:1.2}
+.tourBody{font-size:.9rem;color:var(--muted2);font-weight:600;line-height:1.5;margin-bottom:18px}
+.tourActions{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tourSkip{background:none;border:none;color:var(--muted);font-weight:700;font-size:.82rem;cursor:pointer;padding:8px 4px}
+.tourSkip:hover{color:var(--ink)}
+.tourNavBtns{display:flex;gap:8px}
+.tourPrev{background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--ink);font-weight:800;font-size:.85rem;padding:9px 16px;border-radius:11px;cursor:pointer}
+.tourPrev:hover{background:rgba(255,255,255,.1)}
+.tourNext{background:linear-gradient(135deg,var(--blue),var(--purple));border:none;color:#fff;font-weight:900;font-size:.85rem;padding:9px 18px;border-radius:11px;cursor:pointer}
+.tourNext:hover{filter:brightness(1.1)}
+
 @media (max-width:700px){
   .pvStats{grid-template-columns:repeat(2,1fr)}
   .pvKids{grid-template-columns:1fr}
+  .tourPop{width:calc(100vw - 32px)}
 }

@@ -18,10 +18,11 @@
   <section class="demoHero">
     <h1>Try it. Tap things. <span class="grad">Watch kids light up.</span></h1>
     <p>This is a real working demo — not a video. Tap any chore to mark it done. Switch between Parent and Kid views below.</p>
+    <button class="tourStartBtn" id="startTour">🎯 Take the 60-second tour</button>
   </section>
 
   <div class="tabBar">
-    <button class="tabBtn active" data-view="parent">��‍👩‍👧 Parent View</button>
+    <button class="tabBtn active" data-view="parent" data-tour="tabs">👨‍👩‍👧 Parent View</button>
     <button class="tabBtn" data-view="kid">⭐ Kid View</button>
   </div>
 
@@ -29,7 +30,7 @@
     <div class="demoApp" id="demoApp"></div>
   </div>
 
-  <div class="ctaBanner">
+  <div class="ctaBanner" data-tour="cta">
     <div class="ctaBannerT">Like what you see? 🎉</div>
     <div class="ctaBannerS">Set this up for your own family in 60 seconds. 7-day free trial — no credit card needed.</div>
     <a href="/app" class="ctaBig">🚀 Start My Free Trial →</a>
@@ -40,6 +41,23 @@
   </footer>
 
   <div id="confetti" class="confetti"></div>
+
+  <!-- Guided tour overlay -->
+  <div id="tourLayer" class="tourLayer" hidden>
+    <div class="tourSpotlight" id="tourSpotlight"></div>
+    <div class="tourPop" id="tourPop">
+      <div class="tourStep" id="tourStepCount"></div>
+      <h3 class="tourTitle" id="tourTitle"></h3>
+      <p class="tourBody" id="tourBody"></p>
+      <div class="tourActions">
+        <button class="tourSkip" id="tourSkip">Skip tour</button>
+        <div class="tourNavBtns">
+          <button class="tourPrev" id="tourPrev">← Back</button>
+          <button class="tourNext" id="tourNext">Next →</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="/src/demo.js"></script>
 </body>

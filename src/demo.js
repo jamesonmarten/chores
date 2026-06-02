@@ -81,13 +81,13 @@ function renderParent() {
           <div class="pvSub">Tap any kid card to jump into their view</div>
         </div>
       </div>
-      <div class="pvStats">
+      <div class="pvStats" data-tour="stats">
         <div class="pvStat"><div class="pvStatNum">${kidsCount}</div><div class="pvStatLbl">Kids</div></div>
         <div class="pvStat"><div class="pvStatNum">${totalChor}</div><div class="pvStatLbl">Chores done today</div></div>
         <div class="pvStat"><div class="pvStatNum">${totalPts}</div><div class="pvStatLbl">Points earned</div></div>
         <div class="pvStat"><div class="pvStatNum">${onTrack}/${kidsCount}</div><div class="pvStatLbl">On track</div></div>
       </div>
-      <div class="pvKids">
+      <div class="pvKids" data-tour="kids">
         ${KIDS.map(k => {
           const pct = pctFor(k.id);
           return `
@@ -143,7 +143,7 @@ function renderKid() {
         <div class="kvHi">Hi, ${kid.emoji}</div>
         <div class="kvName">${kid.name}!</div>
       </div>
-      <div class="kvProgress">
+      <div class="kvProgress" data-tour="progress">
         <div class="kvRing">
           <svg width="100" height="100" viewBox="0 0 100 100">
             <defs><linearGradient id="ringGrad" x1="0" x2="1" y1="0" y2="1">
@@ -162,7 +162,7 @@ function renderKid() {
           <div class="kvLevelPts">${pts} / ${max} points today</div>
         </div>
       </div>
-      <div class="kvChores">
+      <div class="kvChores" data-tour="chores">
         ${TASKS[kid.id].map(t => {
           const done = !!state.done[kid.id]?.[t.id];
           return `
@@ -201,3 +201,135 @@ document.querySelectorAll('.tabBtn').forEach(b => {
 });
 function render() { state.view === 'parent' ? renderParent() : renderKid(); }
 render();
+
+// ── Guided Tour ─────────────────────────────────────────────────────
+// Each step targets a [data-tour="…"] element. `view` forces the right tab
+// first, and `action` lets a step demo an interaction (e.g. complete a chore).
+const TOUR_STEPS = [
+  {
+    view: 'parent', target: '[data-tour="stats"]',
+    title: '1. Your family at a glance',
+    body: 'The parent dashboard rolls up every kid: chores done, points earned today, and who\'s on track. No more nagging or spreadsheets.',
+  },
+  {
+    view: 'parent', target: '[data-tour="kids"]',
+    title: '2. One card per kid',
+    body: 'Each kid gets a color-coded card with a live progress bar. Tap a card to jump straight into that child\'s view.',
+  },
+  {
+    view: 'kid', target: '[data-tour="progress"]',
+    title: '3. Kids see their own progress',
+    body: 'A big, satisfying progress ring plus an XP-style level bar. Kids level up from Rookie → Superstar as they earn points.',
+  },
+  {
+    view: 'kid', target: '[data-tour="chores"]',
+    title: '4. Tap a chore = done 🎉',
+    body: 'Tapping a chore marks it complete, adds points, and fills the ring. Finish them all and confetti rains down.',
+    action: () => {
+      const kid = state.currentKid;
+      const firstUndone = (TASKS[kid] || []).find(t => !state.done[kid]?.[t.id]);
+      if (firstUndone) {
+        state.done[kid] = state.done[kid] || {};
+        state.done[kid][firstUndone.id] = true;
+        render();
+      }
+    },
+  },
+  {
+    view: 'parent', target: '[data-tour="tabs"]',
+    title: '5. Switch views anytime',
+    body: 'Flip between the Parent dashboard and each Kid view with one tap. Parents manage; kids play.',
+  },
+  {
+    view: 'parent', target: '[data-tour="cta"]',
+    title: 'That\'s it! 🚀',
+    body: 'Set this up for your own family in about 60 seconds — 7-day free trial, no credit card. Ready?',
+    isLast: true,
+  },
+];
+
+const tour = {
+  i: 0,
+  layer: $('tourLayer'),
+  spot: $('tourSpotlight'),
+  pop: $('tourPop'),
+};
+
+function showTourStep(idx) {
+  const step = TOUR_STEPS[idx];
+  if (!step) return endTour();
+  tour.i = idx;
+
+  // Ensure the right tab/view is active, then wait a frame for re-render.
+  if (state.view !== step.view) {
+    state.view = step.view;
+    updateTabs();
+    render();
+  }
+  if (step.action) step.action();
+
+  requestAnimationFrame(() => requestAnimationFrame(() => positionTour(step)));
+}
+
+function positionTour(step) {
+  const el = document.querySelector(step.target);
+  if (!el) return;
+  // Scroll target into view first.
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  setTimeout(() => {
+    const r = el.getBoundingClientRect();
+    const pad = 8;
+    Object.assign(tour.spot.style, {
+      top:    `${r.top - pad + window.scrollY}px`,
+      left:   `${r.left - pad}px`,
+      width:  `${r.width + pad * 2}px`,
+      height: `${r.height + pad * 2}px`,
+    });
+
+    // Fill content
+    $('tourStepCount').textContent = `Step ${tour.i + 1} of ${TOUR_STEPS.length}`;
+    $('tourTitle').textContent = step.title;
+    $('tourBody').textContent = step.body;
+    $('tourPrev').style.visibility = tour.i === 0 ? 'hidden' : 'visible';
+    $('tourNext').textContent = step.isLast ? 'Start free trial →' : 'Next →';
+
+    // Place popover: below the target if room, else above.
+    const popH = 220, vh = window.innerHeight;
+    const spaceBelow = vh - r.bottom;
+    const top = spaceBelow > popH
+      ? r.bottom + 16 + window.scrollY
+      : r.top - popH + window.scrollY;
+    let left = r.left + r.width / 2 - 170;
+    left = Math.max(16, Math.min(left, window.innerWidth - 356));
+    Object.assign(tour.pop.style, { top: `${Math.max(window.scrollY + 16, top)}px`, left: `${left}px` });
+
+    tour.layer.hidden = false;
+    tour.layer.classList.add('show');
+  }, 350);
+}
+
+function startTour() { showTourStep(0); }
+function endTour() {
+  tour.layer.classList.remove('show');
+  setTimeout(() => { tour.layer.hidden = true; }, 250);
+}
+
+$('startTour').onclick = startTour;
+$('tourSkip').onclick = endTour;
+$('tourPrev').onclick = () => showTourStep(tour.i - 1);
+$('tourNext').onclick = () => {
+  const step = TOUR_STEPS[tour.i];
+  if (step?.isLast) { window.location.href = '/app'; return; }
+  showTourStep(tour.i + 1);
+};
+tour.layer.addEventListener('click', e => { if (e.target === tour.layer) endTour(); });
+document.addEventListener('keydown', e => {
+  if (tour.layer.hidden) return;
+  if (e.key === 'Escape') endTour();
+  if (e.key === 'ArrowRight') $('tourNext').click();
+  if (e.key === 'ArrowLeft' && tour.i > 0) showTourStep(tour.i - 1);
+});
+
+// Reposition spotlight on resize while the tour is open.
+window.addEventListener('resize', () => { if (!tour.layer.hidden) positionTour(TOUR_STEPS[tour.i]); });
