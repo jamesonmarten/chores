@@ -274,38 +274,59 @@ function showTourStep(idx) {
 function positionTour(step) {
   const el = document.querySelector(step.target);
   if (!el) return;
-  // Scroll target into view first.
+  // Scroll the target into view first (it may be below the fold).
   el.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
   setTimeout(() => {
+    // The tour layer is position:fixed, so its children use viewport
+    // coordinates directly — do NOT add window.scrollY (that pushed the
+    // popover off-screen when the page was scrolled).
     const r = el.getBoundingClientRect();
     const pad = 8;
     Object.assign(tour.spot.style, {
-      top:    `${r.top - pad + window.scrollY}px`,
+      top:    `${r.top - pad}px`,
       left:   `${r.left - pad}px`,
       width:  `${r.width + pad * 2}px`,
       height: `${r.height + pad * 2}px`,
     });
 
-    // Fill content
+    // Fill content BEFORE measuring the popover so its height is accurate.
     $('tourStepCount').textContent = `Step ${tour.i + 1} of ${TOUR_STEPS.length}`;
     $('tourTitle').textContent = step.title;
     $('tourBody').textContent = step.body;
     $('tourPrev').style.visibility = tour.i === 0 ? 'hidden' : 'visible';
     $('tourNext').textContent = step.isLast ? 'Start free trial →' : 'Next →';
 
-    // Place popover: below the target if room, else above.
-    const popH = 220, vh = window.innerHeight;
-    const spaceBelow = vh - r.bottom;
-    const top = spaceBelow > popH
-      ? r.bottom + 16 + window.scrollY
-      : r.top - popH + window.scrollY;
-    let left = r.left + r.width / 2 - 170;
-    left = Math.max(16, Math.min(left, window.innerWidth - 356));
-    Object.assign(tour.pop.style, { top: `${Math.max(window.scrollY + 16, top)}px`, left: `${left}px` });
-
+    // Reveal the layer so the popover can be measured (display:none → 0 size).
     tour.layer.hidden = false;
     tour.layer.classList.add('show');
+
+    // Now measure the real popover size and clamp it fully into the viewport.
+    const margin = 16;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const pop = tour.pop.getBoundingClientRect();
+    const popH = pop.height || 200;
+    const popW = pop.width || 340;
+
+    // Vertical: below the target if it fits, else above, else center.
+    const spaceBelow = vh - r.bottom;
+    const spaceAbove = r.top;
+    let top;
+    if (spaceBelow >= popH + margin) {
+      top = r.bottom + margin;
+    } else if (spaceAbove >= popH + margin) {
+      top = r.top - popH - margin;
+    } else {
+      top = (vh - popH) / 2;
+    }
+    // Final clamp — guarantees the whole popover stays on-screen.
+    top = Math.max(margin, Math.min(top, vh - popH - margin));
+
+    // Horizontal: center on the target, clamp to the viewport.
+    let left = r.left + r.width / 2 - popW / 2;
+    left = Math.max(margin, Math.min(left, vw - popW - margin));
+
+    Object.assign(tour.pop.style, { top: `${top}px`, left: `${left}px` });
   }, 350);
 }
 
@@ -331,5 +352,31 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft' && tour.i > 0) showTourStep(tour.i - 1);
 });
 
-// Reposition spotlight on resize while the tour is open.
-window.addEventListener('resize', () => { if (!tour.layer.hidden) positionTour(TOUR_STEPS[tour.i]); });
+// Reposition spotlight + popover on resize/scroll while the tour is open.
+// Uses a lightweight reflow (no re-scroll) so it tracks the target instantly.
+function reflowTour() {
+  if (tour.layer.hidden) return;
+  const step = TOUR_STEPS[tour.i];
+  const el = document.querySelector(step?.target);
+  if (!el) return;
+  const r = el.getBoundingClientRect();
+  const pad = 8;
+  Object.assign(tour.spot.style, {
+    top: `${r.top - pad}px`, left: `${r.left - pad}px`,
+    width: `${r.width + pad * 2}px`, height: `${r.height + pad * 2}px`,
+  });
+  const margin = 16;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const pop = tour.pop.getBoundingClientRect();
+  const popH = pop.height || 200, popW = pop.width || 340;
+  const spaceBelow = vh - r.bottom, spaceAbove = r.top;
+  let top = spaceBelow >= popH + margin ? r.bottom + margin
+          : spaceAbove >= popH + margin ? r.top - popH - margin
+          : (vh - popH) / 2;
+  top = Math.max(margin, Math.min(top, vh - popH - margin));
+  let left = r.left + r.width / 2 - popW / 2;
+  left = Math.max(margin, Math.min(left, vw - popW - margin));
+  Object.assign(tour.pop.style, { top: `${top}px`, left: `${left}px` });
+}
+window.addEventListener('resize', reflowTour);
+window.addEventListener('scroll', reflowTour, { passive: true });
