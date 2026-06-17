@@ -916,26 +916,17 @@ h1, h2, h3, h4, h5, h6, p, strong, span, label, a {
 /* ── Chore Card Grid ────────────────────────────────────────────── */
 .kidChoreGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
 }
 .choreCard {
   position: relative;
   display: flex; flex-direction: column; align-items: center;
-  gap: 9px; text-align: center;
+  gap: 7px; text-align: center;
   background: linear-gradient(160deg, #0e1c30, #111f35);
   border: 2px solid var(--line);
-  border-radius: 26px;
-  /* Big, finger-friendly tap target (well above Apple's 44pt minimum) */
-  padding: 26px 16px 20px;
-  min-height: 184px;
-  width: 100%;
-  color: var(--ink);
-  font: inherit;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-  user-select: none;
+  border-radius: 22px;
+  padding: 20px 12px 16px;
   transition: transform .2s cubic-bezier(.34,1.56,.64,1), border-color .18s, box-shadow .18s, background .18s;
   animation: choreSlide .35s ease both;
   overflow: hidden;
@@ -948,106 +939,32 @@ h1, h2, h3, h4, h5, h6, p, strong, span, label, a {
   opacity: 0;
   transition: opacity .2s;
 }
-.choreCard:hover::before, .choreCard:focus-visible::before { opacity: .12; }
+.choreCard:hover::before, .choreCard:focus-visible::before { opacity: .10; }
 .choreCard:hover { transform: translateY(-4px) scale(1.02); border-color: var(--kid, #0ea5e9); box-shadow: 0 18px 40px rgba(0,0,0,.4); }
-.choreCard:active { transform: scale(.95); }
-.choreCard:focus-visible { outline: 3px solid var(--kid, #0ea5e9); outline-offset: 3px; }
+.choreCard:active { transform: scale(.96); }
 
 .choreCard.done {
   background: linear-gradient(160deg, #052e16, #064e3b);
-  border-color: rgba(34,197,94,.55);
+  border-color: rgba(34,197,94,.45);
+  opacity: .85;
 }
 .choreCard.done::before { opacity: 0 !important; }
 
-/* The big tappable check circle — the clear "complete me" affordance */
-.choreCheckCircle {
-  position: absolute; top: 12px; right: 12px;
-  width: 34px; height: 34px;
-  border-radius: 50%;
-  border: 2.5px solid rgba(255,255,255,.22);
-  background: rgba(255,255,255,.04);
-  display: flex; align-items: center; justify-content: center;
-  color: transparent;
-  transition: all .25s cubic-bezier(.34,1.56,.64,1);
-}
-.choreCheckCircle svg { width: 20px; height: 20px; opacity: 0; transform: scale(.5); transition: all .25s cubic-bezier(.34,1.56,.64,1); }
-.choreCard.done .choreCheckCircle {
-  background: var(--green);
-  border-color: var(--green);
-  color: #052e16;
-  box-shadow: 0 6px 16px rgba(34,197,94,.4);
-}
-.choreCard.done .choreCheckCircle svg { opacity: 1; transform: scale(1); }
-
-.choreEmoji { font-size: 3rem; line-height: 1; transition: transform .2s; }
-.choreCard:active .choreEmoji { transform: scale(1.15) rotate(-4deg); }
-.choreTitle { font-size: 1.02rem; font-weight: 1000; line-height: 1.2; }
-.choreHelper{ font-size: .8rem; color: var(--muted); font-weight: 750; }
+.choreEmoji { font-size: 2.4rem; line-height: 1; }
+.choreTitle { font-size: .9rem; font-weight: 1000; line-height: 1.2; }
+.choreHelper{ font-size: .74rem; color: var(--muted); font-weight: 750; }
 .chorePts {
   background: rgba(255,255,255,.08);
-  border-radius: 999px; padding: 5px 14px;
-  font-size: .9rem; font-weight: 1000; color: var(--green);
-  margin-top: auto;
+  border-radius: 999px; padding: 3px 10px;
+  font-size: .78rem; font-weight: 1000; color: var(--green);
 }
-.chorePts.done { color: #86efac; background: rgba(34,197,94,.18); }
+.chorePts.done { color: #86efac; background: rgba(34,197,94,.15); }
 .choreCheck {
   position: absolute; top: 10px; right: 12px;
   font-size: 1rem; color: var(--green);
   animation: popIn .25s cubic-bezier(.34,1.56,.64,1) both;
 }
-.kidNoTasks { text-align: center; color: var(--muted); font-size: 1.05rem; padding: 44px 16px; font-weight: 800; }
-
-/* ── Kid progress tracker (sticky-feel summary at top of chore list) ── */
-.kidProgressTracker {
-  background: linear-gradient(160deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  padding: 16px 16px 14px;
-  box-shadow: 0 8px 30px -12px var(--kid, #0ea5e9);
-}
-.kptTop { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
-.kptCount { font-size: 1rem; font-weight: 850; color: var(--muted); }
-.kptDone { font-size: 1.5rem; font-weight: 1000; color: var(--ink); }
-.kptOf { font-weight: 800; }
-.kptPct { font-size: 1.5rem; font-weight: 1000; color: var(--kid, #0ea5e9); }
-.kptBarOuter { height: 12px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
-.kptBarInner {
-  height: 100%; border-radius: 999px;
-  background: linear-gradient(90deg, var(--kid, #0ea5e9), #fff3);
-  background-color: var(--kid, #0ea5e9);
-  transition: width .5s cubic-bezier(.34,1.56,.64,1);
-  box-shadow: 0 0 12px var(--kid, #0ea5e9);
-}
-
-/* Filter chips — big pill toggles */
-.kidFilters { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
-.kidFilterChip {
-  flex: 1 1 auto;
-  min-height: 44px;
-  padding: 10px 14px;
-  border-radius: 999px;
-  border: 1.5px solid var(--line);
-  background: rgba(255,255,255,.04);
-  color: var(--muted);
-  font-size: .9rem; font-weight: 900;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-  transition: transform .12s, background .15s, color .15s, border-color .15s;
-}
-.kidFilterChip:active { transform: scale(.95); }
-.kidFilterChip.active {
-  background: var(--kid, #0ea5e9);
-  border-color: var(--kid, #0ea5e9);
-  color: #04121f;
-}
-
-/* Group meta (count + Now badge) */
-.kidGroupMeta { display: inline-flex; align-items: center; gap: 8px; }
-.kidGroupCount {
-  font-size: .78rem; font-weight: 900; color: var(--muted);
-  background: rgba(255,255,255,.06); border-radius: 999px; padding: 2px 10px;
-}
+.kidNoTasks { text-align: center; color: var(--muted); font-size: .95rem; padding: 40px 0; font-weight: 750; }
 
 /* ── Level progress bar ─────────────────────────────────────────── */
 .kidLevelBar { padding: 6px 0; }
@@ -1246,24 +1163,15 @@ h1, h2, h3, h4, h5, h6, p, strong, span, label, a {
   .parentStats { grid-template-columns: repeat(2, 1fr); }
   .parentKidsGrid { grid-template-columns: 1fr; }
   .modeCards { grid-template-columns: 1fr 1fr; }
-  .kidChoreGrid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .kidChoreGrid { grid-template-columns: repeat(2, 1fr); }
   .headerActions { gap: 5px; }
   .iconBtn { padding: 7px 10px; font-size: .78rem; }
   .parentHeader { padding: 10px 12px; }
 }
 @media (max-width: 400px) {
-  .kidChoreGrid { grid-template-columns: 1fr 1fr; gap: 10px; }
-  .choreCard { padding: 22px 10px 16px; min-height: 168px; border-radius: 22px; }
-  .choreEmoji { font-size: 2.6rem; }
-  .choreTitle { font-size: .95rem; }
+  .kidChoreGrid { grid-template-columns: 1fr 1fr; }
   .modeCards { gap: 12px; }
   .modeCard  { padding: 22px 10px; }
-}
-/* Tablets & big phones in landscape — roomier multi-column grid */
-@media (min-width: 760px) {
-  .kidChoreGrid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 18px; }
-  .choreCard { min-height: 200px; }
-  .choreEmoji { font-size: 3.4rem; }
 }
 
 /* ================================================================
@@ -1742,24 +1650,19 @@ h1, h2, h3, h4, h5, h6, p, strong, span, label, a {
 /* Chore card extras (timer + video buttons) */
 .choreCard { position: relative; cursor: pointer; }
 .choreExtras {
-  display: flex; gap: 8px; margin-top: 4px; justify-content: center; flex-wrap: wrap;
+  display: flex; gap: 6px; margin-top: 8px; justify-content: center;
 }
 .choreExtraBtn {
   background: rgba(255,255,255,.1);
-  border: 1px solid rgba(255,255,255,.18);
+  border: 1px solid rgba(255,255,255,.15);
   color: #fff;
-  padding: 8px 12px;
-  min-height: 38px;
-  border-radius: 12px;
-  font-size: .82rem;
-  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: .85em;
   cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-  transition: background .15s, transform .1s;
+  transition: background .15s;
 }
 .choreExtraBtn:hover { background: rgba(255,255,255,.2); }
-.choreExtraBtn:active { transform: scale(.93); }
 
 /* Reward chips (kid view) */
 .kidRewardsBar {
@@ -2880,57 +2783,4 @@ html.frameMode body > *:not(#frameLayer) { display: none !important; }
 @keyframes godPulse {
   0%, 100% { box-shadow: 0 2px 10px rgba(245,158,11,.4); }
   50%      { box-shadow: 0 2px 18px rgba(245,158,11,.85); }
-}
-
-/* ── Toasts (non-blocking kid feedback + undo) ──────────────────── */
-.toastWrap {
-  position: fixed;
-  left: 50%;
-  bottom: calc(20px + env(safe-area-inset-bottom));
-  transform: translateX(-50%);
-  z-index: 300;
-  display: flex; flex-direction: column-reverse; gap: 10px;
-  width: min(420px, calc(100vw - 28px));
-  pointer-events: none;
-}
-.toast {
-  pointer-events: auto;
-  display: flex; align-items: center; gap: 12px;
-  background: rgba(15,28,48,.96);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 16px;
-  padding: 12px 14px;
-  box-shadow: 0 14px 40px rgba(0,0,0,.5);
-  color: var(--ink);
-  opacity: 0;
-  transform: translateY(16px) scale(.96);
-  transition: opacity .22s ease, transform .22s cubic-bezier(.34,1.56,.64,1);
-}
-.toast.toastIn { opacity: 1; transform: translateY(0) scale(1); }
-.toast.toastOut { opacity: 0; transform: translateY(16px) scale(.96); }
-.toast-success { border-color: rgba(34,197,94,.4); box-shadow: 0 14px 40px rgba(34,197,94,.22); }
-.toast-warn { border-color: rgba(245,158,11,.4); }
-.toastEmoji { font-size: 1.6rem; line-height: 1; flex-shrink: 0; }
-.toastText { flex: 1; font-weight: 900; font-size: 1rem; }
-.toastAction {
-  flex-shrink: 0;
-  background: rgba(255,255,255,.12);
-  border: 1px solid rgba(255,255,255,.2);
-  color: var(--ink);
-  border-radius: 10px;
-  padding: 8px 16px;
-  min-height: 40px;
-  font-weight: 900; font-size: .9rem;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-  transition: background .15s, transform .1s;
-}
-.toastAction:hover { background: rgba(255,255,255,.2); }
-.toastAction:active { transform: scale(.93); }
-
-@media (prefers-reduced-motion: reduce) {
-  .toast, .choreCard, .kptBarInner, .choreCheckCircle, .choreCheckCircle svg { transition: none !important; animation: none !important; }
 }
