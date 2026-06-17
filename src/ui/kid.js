@@ -16,10 +16,16 @@ import { playVoice } from '../utils/voice.js';
 import { renderNotesStrip } from './notes.js';
 import { getRoutines } from '../state/store.js';
 import { runRoutine } from './routines.js';
+import { hapticTap, hapticSuccess, hapticCelebrate, hapticUndo } from '../utils/haptics.js';
+import { showToast } from '../utils/toast.js';
 
 let _activeKidId = null;
 let _state = null;
 let _onUpdate = null;
+let _filter = 'all';   // 'all' | 'todo' | 'done'  — kid-chosen view filter
+
+const FILTER_KEY = 'familyChoresKidFilter';
+try { _filter = localStorage.getItem(FILTER_KEY) || 'all'; } catch {}
 
 /** Initialize kid mode for a specific kid */
 export function initKidMode(state, kidId, onUpdate) {
@@ -88,6 +94,11 @@ function renderKidTasks() {
   const maxPts = getMaxPoints(_state, kid.id);
   const allDone = pts >= maxPts && tasks.length > 0;
 
+  // Completion stats for the progress tracker
+  const doneCount = tasks.filter(t => !!(ks.done || {})[taskKey(t.id)]).length;
+  const totalCount = tasks.length;
+  const donePct = totalCount ? Math.round(doneCount / totalCount * 100) : 0;
+
   // Group tasks by time-of-day
   const cur = currentPeriod();
   const groups = [
@@ -100,6 +111,21 @@ function renderKidTasks() {
       <div class="celebEmoji">🎉</div>
       <div class="celebText">Amazing work, ${kid.name}!</div>
       <div class="celebSub">You completed all your chores today!</div>
+    </div>` : ''}
+    ${totalCount ? `
+    <div class="kidProgressTracker" style="--kid:${kid.color}">
+      <div class="kptTop">
+        <div class="kptCount"><span class="kptDone">${doneCount}</span> <span class="kptOf">of ${totalCount} done</span></div>
+        <div class="kptPct">${donePct}%</div>
+      </div>
+      <div class="kptBarOuter">
+        <div class="kptBarInner" style="width:${donePct}%"></div>
+      </div>
+      <div class="kidFilters" role="tablist" aria-label="Filter chores">
+        <button class="kidFilterChip${_filter === 'all' ? ' active' : ''}" data-filter="all" role="tab">All ${totalCount}</button>
+        <button class="kidFilterChip${_filter === 'todo' ? ' active' : ''}" data-filter="todo" role="tab">To-do ${totalCount - doneCount}</button>
+        <button class="kidFilterChip${_filter === 'done' ? ' active' : ''}" data-filter="done" role="tab">Done ${doneCount}</button>
+      </div>
     </div>` : ''}
     <div id="kidNotesStrip" class="notesStripWrap"></div>
     <div id="kidRoutinesBar"></div>
@@ -119,6 +145,14 @@ function renderKidTasks() {
       </div>
     </div>
   `;
+
+  // Filter chip wiring
+  main.querySelectorAll('[data-filter]').forEach(b => b.onclick = () => {
+    _filter = b.dataset.filter;
+    try { localStorage.setItem(FILTER_KEY, _filter); } catch {}
+    hapticTap();
+    renderKidTasks();
+  });
 
   // Reward chips
   renderRewardChipsForKid(_state, kid.id, main.querySelector('#kidRewardsContainer'));
@@ -153,35 +187,57 @@ function renderKidTasks() {
 
   // Render grouped task sections
   const wrap = main.querySelector('#kidGroupsWrap');
+  let shownCards = 0;
   groups.forEach((g, gi) => {
+    // Apply the kid's chosen filter (all / todo / done)
+    const visible = g.tasks.filter(t => {
+      const isDone = !!(ks.done || {})[taskKey(t.id)];
+      if (_filter === 'todo') return !isDone;
+      if (_filter === 'done') return isDone;
+      return true;
+    });
+    if (!visible.length) return;
+
     const isCurrent = g.id === cur;
     const section = document.createElement('section');
     section.className = `kidGroup${isCurrent ? ' current' : ''}`;
+    const gDone = g.tasks.filter(t => !!(ks.done || {})[taskKey(t.id)]).length;
     section.innerHTML = `
       <h3 class="kidGroupTitle">
         <span>${g.emoji} ${g.label}</span>
-        ${isCurrent ? '<span class="kidGroupNow">Now</span>' : ''}
+        <span class="kidGroupMeta">
+          ${isCurrent ? '<span class="kidGroupNow">Now</span>' : ''}
+          <span class="kidGroupCount">${gDone}/${g.tasks.length}</span>
+        </span>
       </h3>
       <div class="kidChoreGrid"></div>
     `;
     const grid = section.querySelector('.kidChoreGrid');
-    g.tasks.forEach((t, i) => {
+    visible.forEach((t, i) => {
       const dKey = taskKey(t.id);
       const isDone = !!(ks.done || {})[dKey];
+      // Use a div (not <button>) so the optional extra <button>s inside stay
+      // valid HTML; we add full button semantics + keyboard support manually.
       const card = document.createElement('div');
       card.className = `choreCard${isDone ? ' done' : ''}`;
       card.style.setProperty('--kid', kid.color);
-      card.style.animationDelay = `${(gi * 4 + i) * 0.05}s`;
+      card.style.animationDelay = `${(shownCards++) * 0.04}s`;
+      card.setAttribute('role', 'button');
+      card.tabIndex = 0;
+      card.setAttribute('aria-pressed', isDone ? 'true' : 'false');
+      card.setAttribute('aria-label', `${t.title}${isDone ? ', done' : ''}, ${t.pts} points`);
       card.innerHTML = `
+        <div class="choreCheckCircle" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
         <div class="choreEmoji">${t.emoji || '✅'}</div>
         <div class="choreTitle">${t.title}</div>
-        <div class="choreHelper">${isDone ? '✓ Done!' : t.helper}</div>
-        <div class="chorePts ${isDone ? 'done' : ''}">+${t.pts}</div>
-        ${isDone ? '<div class="choreCheck">✓</div>' : ''}
+        <div class="choreHelper">${isDone ? '✓ Done — nice!' : (t.helper || 'Tap when finished')}</div>
+        <div class="chorePts ${isDone ? 'done' : ''}">+${t.pts} pts</div>
         ${(t.timerSec > 0 || t.videoUrl || t.voiceUrl) && !isDone ? `
           <div class="choreExtras">
-            ${t.voiceUrl ? `<button class="choreExtraBtn" data-voice="${t.id}" title="Play parent's voice">🔊</button>` : ''}
-            ${t.videoUrl ? `<button class="choreExtraBtn" data-video="${t.id}" title="Watch instructions">🎥</button>` : ''}
+            ${t.voiceUrl ? `<button class="choreExtraBtn" data-voice="${t.id}" title="Play parent's voice">🔊 Listen</button>` : ''}
+            ${t.videoUrl ? `<button class="choreExtraBtn" data-video="${t.id}" title="Watch instructions">🎥 How-to</button>` : ''}
             ${t.timerSec > 0 ? `<button class="choreExtraBtn" data-timer="${t.id}" title="Start ${t.timerSec}s timer">⏱ ${t.timerSec}s</button>` : ''}
           </div>` : ''}
       `;
@@ -190,13 +246,27 @@ function renderKidTasks() {
         if (e.target.closest('.choreExtraBtn')) return;
         toggleChore(_activeKidId, t);
       };
+      // Keyboard: Enter/Space toggles, just like a real button
+      card.onkeydown = (e) => {
+        if (e.target.closest('.choreExtraBtn')) return;
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+          e.preventDefault();
+          toggleChore(_activeKidId, t);
+        }
+      };
       grid.appendChild(card);
     });
     wrap.appendChild(section);
   });
 
   if (tasks.length === 0) {
-    wrap.innerHTML = '<div class="kidNoTasks">No chores yet! Ask a parent to add some.</div>';
+    wrap.innerHTML = '<div class="kidNoTasks">No chores yet! Ask a parent to add some. 🌱</div>';
+  } else if (shownCards === 0) {
+    // Filter hid everything — friendly empty state
+    const msg = _filter === 'done'
+      ? 'Nothing finished yet — you got this! 💪'
+      : 'All done here! Tap “All” to see everything. 🎉';
+    wrap.innerHTML = `<div class="kidNoTasks">${msg}</div>`;
   }
 
   // Tomorrow preview (collapsed by default)
@@ -249,6 +319,7 @@ function toggleChore(kidId, task) {
     const pts = getPoints(_state, kidId);
     setPoints(_state, kidId, pts - task.pts);
     ks.totalPoints = Math.max(0, (ks.totalPoints || 0) - task.pts);
+    hapticUndo();
   } else {
     ks.done[dKey] = true;
     const pts = getPoints(_state, kidId);
@@ -257,6 +328,16 @@ function toggleChore(kidId, task) {
 
     logHistory(_state, kidId, { message: `Completed "${task.title}"`, task: task.title, pts: task.pts });
     playSfx('done');
+    hapticSuccess();
+
+    // Quick, non-blocking feedback with an Undo (kids stay in flow)
+    showToast({
+      emoji: task.emoji || '✅',
+      text: `+${task.pts} points!`,
+      tone: 'success',
+      actionText: 'Undo',
+      onAction: () => toggleChore(kidId, task),
+    });
 
     // Check for treats
     const newPts = getPoints(_state, kidId);
@@ -267,6 +348,7 @@ function toggleChore(kidId, task) {
       save(_state);
       launchConfetti();
       playSfx('levelUp');
+      hapticCelebrate();
       const kid = _state.kids.find(k => k.id === kidId);
       showModal(`Amazing, ${kid?.name}! 🎉`, `You finished all your chores! You earned a treat! 🍬`, false, '🏆');
     }
@@ -277,6 +359,7 @@ function toggleChore(kidId, task) {
       ks.eggs = (ks.eggs || 0) + 1;
       launchConfetti();
       playSfx('reward');
+      hapticCelebrate();
       showModal(egg.title, egg.text, false, egg.emoji);
     }
   }
