@@ -21,6 +21,8 @@
     "cap:open:android": "cap open android",
     "ios": "npm run cap:sync && npm run cap:open",
     "android": "npm run cap:sync:android && npm run cap:open:android",
+    "fastlane:ios:beta": "bundle exec fastlane ios beta",
+    "fastlane:android:internal": "bundle exec fastlane android internal",
     "smoke": "node scripts/smoke-test.mjs"
   },
   "devDependencies": {

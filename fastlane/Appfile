@@ -1,0 +1,8 @@
+app_identifier("com.devcabin.familychores")
+apple_id(ENV["APPLE_ID"] || "")
+
+itc_team_id(ENV["APP_STORE_CONNECT_TEAM_ID"] || "")
+team_id(ENV["APPLE_TEAM_ID"] || "")
+
+json_key_file(ENV["GOOGLE_PLAY_JSON_KEY_PATH"] || "")
+package_name("com.devcabin.familychores")

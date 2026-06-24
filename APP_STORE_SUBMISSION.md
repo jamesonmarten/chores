@@ -204,3 +204,9 @@ npm run cap:open:ios
 npm run cap:sync:android
 npm run cap:open:android
 ```
+
+## 11. Automation And Copy Assets
+
+- Fastlane setup and lane usage: `FASTLANE_SETUP.md`
+- Store listing copy blocks: `STORE_LISTING_COPY.md`
+- Team release template: `.github/ISSUE_TEMPLATE/release-checklist.md`
