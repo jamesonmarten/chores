@@ -13,13 +13,42 @@ const modal    = () => document.getElementById('parentModal');
 const modalBox = () => document.getElementById('parentModalBox');
 
 function open(html) {
-  modalBox().innerHTML = html;
-  modal().hidden = false;
-  requestAnimationFrame(() => modal().classList.add('show'));
+  const m = modal();
+  const box = modalBox();
+  box.innerHTML = html;
+  // Reward manager needs more horizontal room than default modal forms.
+  box.classList.add('wide', 'rwModal');
+
+  const close = () => {
+    m.classList.remove('show');
+    setTimeout(() => {
+      m.hidden = true;
+      box.innerHTML = '';
+      box.classList.remove('wide', 'rwModal');
+    }, 220);
+    document.removeEventListener('keydown', onKey);
+  };
+
+  function onKey(e) { if (e.key === 'Escape') close(); }
+
+  // Match the parent modal UX: X works, clicking backdrop closes, Esc closes.
+  box.querySelectorAll('.pmClose').forEach(el => el.addEventListener('click', close));
+  m.onclick = e => { if (e.target.id === 'parentModal') close(); };
+  document.addEventListener('keydown', onKey);
+
+  m.hidden = false;
+  requestAnimationFrame(() => m.classList.add('show'));
+  return close;
 }
 function close() {
-  modal().classList.remove('show');
-  setTimeout(() => { modal().hidden = true; modalBox().innerHTML = ''; }, 220);
+  const m = modal();
+  const box = modalBox();
+  m.classList.remove('show');
+  setTimeout(() => {
+    m.hidden = true;
+    box.innerHTML = '';
+    box.classList.remove('wide', 'rwModal');
+  }, 220);
 }
 
 const esc = (s='') => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

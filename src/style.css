@@ -1714,15 +1714,17 @@ h1, h2, h3, h4, h5, h6, p, strong, span, label, a {
 .kidRwSub  { font-size: .75em; color: #aab2c0; }
 
 /* Reward modal — parent */
-.rwTabs { display: flex; gap: 6px; margin: 12px 0; flex-wrap: wrap; }
+.rwModal { max-width: 760px; }
+.rwTabs { display: flex; gap: 8px; margin: 12px 0 14px; flex-wrap: wrap; }
 .rwTab {
-  background: rgba(255,255,255,.06);
+  background: rgba(255,255,255,.08);
   border: 1px solid rgba(255,255,255,.1);
   color: #fff;
-  padding: 6px 12px;
-  border-radius: 8px;
+  padding: 8px 13px;
+  border-radius: 10px;
   cursor: pointer;
   font-size: .9em;
+  font-weight: 800;
 }
 .rwTab.active {
   background: var(--kid, #35c976);
@@ -1730,35 +1732,43 @@ h1, h2, h3, h4, h5, h6, p, strong, span, label, a {
 }
 .rwAddForm {
   display: grid;
-  grid-template-columns: 1fr 70px 90px 130px 90px auto;
-  gap: 6px;
+  grid-template-columns: minmax(200px, 1fr) 74px 94px 132px;
+  gap: 8px;
   margin-bottom: 14px;
+  align-items: center;
 }
 .rwAddForm input, .rwAddForm select {
   background: rgba(255,255,255,.05);
   border: 1px solid rgba(255,255,255,.1);
   color: #fff;
-  padding: 6px 8px;
-  border-radius: 6px;
-  font-size: .9em;
+  padding: 9px 10px;
+  border-radius: 8px;
+  font-size: .92em;
+  min-height: 44px;
+}
+.rwAddForm #rwAdd {
+  grid-column: 1 / -1;
+  justify-self: start;
+  min-height: 44px;
+  padding: 10px 16px;
 }
 .rwList { display: flex; flex-direction: column; gap: 10px; }
 .rwRow {
-  background: rgba(255,255,255,.04);
+  background: rgba(255,255,255,.05);
   border: 1px solid rgba(255,255,255,.08);
   border-left: 3px solid var(--kid, #35c976);
-  border-radius: 10px;
-  padding: 10px 12px;
+  border-radius: 12px;
+  padding: 12px;
 }
 .rwRowMain { display: flex; align-items: center; gap: 10px; }
 .rwEmoji   { font-size: 1.5em; }
 .rwInfo    { flex: 1; }
-.rwTitle   { font-weight: 600; }
+.rwTitle   { font-weight: 700; }
 .rwMeta    { font-size: .8em; color: #9aa1ad; }
 .rwBar {
-  height: 6px;
+  height: 7px;
   background: rgba(255,255,255,.08);
-  border-radius: 3px;
+  border-radius: 4px;
   margin: 8px 0 4px;
   overflow: hidden;
 }
@@ -1819,7 +1829,14 @@ h1, h2, h3, h4, h5, h6, p, strong, span, label, a {
 .tvoHelper { margin-top: 10px; color: #9aa1ad; font-size: .9em; }
 
 @media (max-width: 640px) {
-  .rwAddForm { grid-template-columns: 1fr 1fr; }
+  .rwModal { max-width: 100%; }
+  .rwAddForm {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .rwAddForm #rwTitle { grid-column: 1 / -1; }
+  .rwAddForm #rwAdd { width: 100%; justify-self: stretch; }
+  .rwRowMain { align-items: flex-start; }
   .ttoClock  { font-size: 3.5em; }
   .ttoRing   { width: 180px; height: 180px; }
 }
