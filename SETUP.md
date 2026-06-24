@@ -81,15 +81,26 @@ Repo → Settings → Secrets and variables → Actions:
 
 (`VERCEL_ORG_ID` + `VERCEL_PROJECT_ID` are hard-coded in `.github/workflows/deploy.yml`.)
 
-## 7. iOS app (Capacitor)
+## 7. Mobile apps (Capacitor)
 
 The iOS shell loads the **bundled** web assets (offline-friendly), but POSTs/fetches go to `https://chores.devcabin.tech/api`. `src/ui/calendar-sync.js` already detects `Capacitor.isNativePlatform()` and uses the absolute URL.
 
 ```bash
 cd family-chores-more
-npm run cap:sync   # build + copy into ios/App/App/public
-npm run cap:open   # Xcode → set team → Archive → Distribute
+npm run cap:sync:all      # build + copy into ios/ + android/
+npm run cap:open:ios      # Xcode → set team → Archive → Distribute
+npm run cap:open:android  # Android Studio → Generate Signed Bundle/APK
 ```
+
+### Android release checklist
+
+1. Install Android Studio + SDK + JDK 17.
+2. Run `npm run cap:sync:android`.
+3. Open Android project with `npm run cap:open:android`.
+4. Configure package id/signing in Android Studio.
+5. Build an AAB: Build → Generate Signed Bundle / APK → Android App Bundle.
+6. Upload AAB to Google Play Console (internal test track first).
+7. Verify checkout/deep-link flow on a real Android device.
 
 ## 8. Local dev
 

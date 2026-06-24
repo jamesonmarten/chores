@@ -1,6 +1,6 @@
 # Family Chores & More
 
-A modular, production-ready family chore tracker — Vite + Vanilla JS + Stripe + Capacitor iOS.
+A modular, production-ready family chore tracker — Vite + Vanilla JS + Stripe + Capacitor (iOS + Android).
 
 ---
 
@@ -18,6 +18,7 @@ src/
 server/
   index.js      (Express: Stripe Checkout + webhook)
 ios/            (Capacitor Xcode project)
+android/        (Capacitor Android Studio project)
 ```
 
 ---
@@ -65,7 +66,7 @@ npm run preview   # local preview of production build
 
 ---
 
-## 4 — iOS / iPad via Capacitor
+## 4 — Mobile Apps via Capacitor (iOS + Android)
 
 ### Prerequisites
 - macOS + Xcode 15+
@@ -74,13 +75,14 @@ npm run preview   # local preview of production build
 
 ### First time
 ```bash
-npm run cap:sync   # Vite build + sync into ios/
-npm run cap:open   # Open Xcode
+npm run cap:sync:all      # Build web + sync ios/ and android/
+npm run cap:open:ios      # Open Xcode project
+npm run cap:open:android  # Open Android Studio project
 ```
 
 ### Every web code change
 ```bash
-npm run cap:sync
+npm run cap:sync:all
 ```
 
 ### In Xcode
@@ -88,6 +90,18 @@ npm run cap:sync
 2. Bundle ID: `com.devcabin.familychores`
 3. Set your Development Team under Signing & Capabilities
 4. Press Run
+
+### In Android Studio
+1. Open with `npm run cap:open:android`
+2. Wait for Gradle sync to finish
+3. Set applicationId in `android/app/build.gradle` if needed
+4. Select emulator/device and press Run
+
+### Quick commands
+```bash
+npm run ios      # Build + sync iOS + open Xcode
+npm run android  # Build + sync Android + open Android Studio
+```
 
 ### Stripe on iOS
 `@capacitor/browser` opens Stripe Checkout in a native sheet.

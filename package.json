@@ -12,19 +12,28 @@
     "cap:add:ios": "cap add ios",
     "cap:sync": "npm run build:ios && cap sync ios",
     "cap:open": "cap open ios",
+    "build:mobile": "vite build",
+    "cap:add:android": "cap add android",
+    "cap:sync:ios": "npm run build:mobile && cap sync ios",
+    "cap:sync:android": "npm run build:mobile && cap sync android",
+    "cap:sync:all": "npm run build:mobile && cap sync",
+    "cap:open:ios": "cap open ios",
+    "cap:open:android": "cap open android",
     "ios": "npm run cap:sync && npm run cap:open",
+    "android": "npm run cap:sync:android && npm run cap:open:android",
     "smoke": "node scripts/smoke-test.mjs"
   },
   "devDependencies": {
-    "@capacitor/cli": "^8.3.1",
+    "@capacitor/cli": "^8.4.1",
     "typescript": "~6.0.2",
     "vite": "^8.0.10"
   },
   "dependencies": {
+    "@capacitor/android": "^8.4.1",
     "@capacitor/app": "^8.1.0",
     "@capacitor/browser": "^8.0.3",
-    "@capacitor/core": "^8.3.1",
-    "@capacitor/ios": "^8.3.1",
+    "@capacitor/core": "^8.4.1",
+    "@capacitor/ios": "^8.4.1",
     "@stripe/stripe-js": "^9.4.0",
     "@upstash/redis": "^1.37.0",
     "stripe": "^22.1.0"
