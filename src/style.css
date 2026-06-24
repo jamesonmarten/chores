@@ -1732,8 +1732,8 @@ h1, h2, h3, h4, h5, h6, p, strong, span, label, a {
 }
 .rwAddForm {
   display: grid;
-  grid-template-columns: minmax(200px, 1fr) 74px 94px 132px;
-  gap: 8px;
+  grid-template-columns: 1fr 50px 68px 110px;
+  gap: 6px;
   margin-bottom: 14px;
   align-items: center;
 }
@@ -1741,16 +1741,22 @@ h1, h2, h3, h4, h5, h6, p, strong, span, label, a {
   background: rgba(255,255,255,.05);
   border: 1px solid rgba(255,255,255,.1);
   color: #fff;
-  padding: 9px 10px;
+  padding: 8px 9px;
   border-radius: 8px;
-  font-size: .92em;
-  min-height: 44px;
+  font-size: .88em;
+  min-height: 42px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+.rwAddForm input::placeholder { font-size: .88em; }
 .rwAddForm #rwAdd {
   grid-column: 1 / -1;
   justify-self: start;
-  min-height: 44px;
-  padding: 10px 16px;
+  min-height: 42px;
+  padding: 9px 14px;
+  font-size: .9em;
 }
 .rwList { display: flex; flex-direction: column; gap: 10px; }
 .rwRow {
