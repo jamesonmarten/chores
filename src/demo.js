@@ -41,7 +41,10 @@ const $ = id => document.getElementById(id);
 const totalDone = id => Object.values(state.done[id] || {}).filter(Boolean).length;
 const pointsFor = id => (TASKS[id] || []).reduce((a, t) => a + (state.done[id]?.[t.id] ? t.pts : 0), 0);
 const maxFor    = id => (TASKS[id] || []).reduce((a, t) => a + t.pts, 0);
-const pctFor    = id => Math.round(pointsFor(id) / maxFor(id) * 100);
+const pctFor    = id => {
+  const max = maxFor(id);
+  return max ? Math.round(pointsFor(id) / max * 100) : 0;
+};
 
 function levelFor(pts) {
   if (pts < 30)  return { name: 'Rookie',    emoji: '🌱', next: 30,  prev: 0 };
@@ -126,7 +129,9 @@ function renderKid() {
   const max = maxFor(kid.id);
   const pct = pctFor(kid.id);
   const lvl = levelFor(pts);
-  const lvlPct = Math.min(100, ((pts - lvl.prev) / (lvl.next - lvl.prev)) * 100);
+  // Keep the horizontal bar aligned with today's visible progress so it does
+  // not appear to "reset" on level-up boundaries.
+  const lvlPct = pct;
   const r = 44, c = 2 * Math.PI * r;
   const dashOff = c * (1 - pct / 100);
 
